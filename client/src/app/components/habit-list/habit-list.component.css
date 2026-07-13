@@ -1,0 +1,140 @@
+/* habit-list.component.css */
+
+.habit-tracker {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 24px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+h2 {
+  margin-top: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+/* ADD HABIT FORM */
+.add-habit {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.add-habit input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+  /* transition: smoothly animates the border-color change over 0.2s
+     instead of it snapping instantly - subtle, but noticeable */
+}
+
+.add-habit input:focus {
+  border-color: #6366f1;
+}
+
+.add-habit button {
+  padding: 10px 16px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.add-habit button:hover {
+  background: #4f46e5;
+}
+
+.add-habit button:active {
+  transform: scale(0.96);
+  /* slight "press down" shrink effect on click - cheap, satisfying feedback */
+}
+
+/* HABIT ITEM ROW */
+.habit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+
+  /* Animation: each habit row fades and slides in when it appears
+     (either on page load or right after adding a new one) */
+  animation: slideIn 0.35s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.habit-name {
+  font-weight: 600;
+  color: #1e293b;
+  flex: 1;
+}
+
+.streak {
+  font-size: 0.9rem;
+  color: #f97316;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.habit-item button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.habit-item button:first-of-type {
+  /* "Mark Done Today" button */
+  background: #22c55e;
+  color: white;
+}
+
+.habit-item button:first-of-type:hover {
+  background: #16a34a;
+}
+
+.habit-item button:last-of-type {
+  /* "Delete" button */
+  background: #ef4444;
+  color: white;
+}
+
+.habit-item button:last-of-type:hover {
+  background: #dc2626;
+}
+
+.habit-item button:active {
+  transform: scale(0.94);
+}
+
+p {
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 20px;
+}

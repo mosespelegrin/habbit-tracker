@@ -1,0 +1,42 @@
+<div class="habit-tracker">
+
+  <h2>Habit Streak Tracker</h2>
+
+  <!-- ADD HABIT FORM
+       [(ngModel)] is "two-way binding": it keeps newHabitName (in the .ts)
+       and this input box's value in sync automatically, both directions -
+       type in the box, newHabitName updates; change newHabitName in code,
+       the box updates too. Requires FormsModule (already imported). -->
+  <div class="add-habit">
+    <input
+      type="text"
+      [(ngModel)]="newHabitName"
+      placeholder="New habit name (e.g. Gym, Read 30 mins)"
+    />
+    <!-- (click) binds a DOM click event to a method on the component.
+         Same concept as onclick="" in plain HTML, but Angular's way. -->
+    <button (click)="addHabit()">Add Habit</button>
+  </div>
+
+  <!-- HABIT LIST
+       *ngFor repeats this whole block once per item in the habits array. -->
+  <div class="habit-item" *ngFor="let habit of habits" [@habitAnimation]>
+
+    <span class="habit-name">{{ habit.name }}</span>
+
+    <!-- streaks[habit._id] looks up this specific habit's streak count
+         from the streaks object keyed by habit ID. -->
+    <span class="streak">
+      🔥 {{ streaks[habit._id] || 0 }} day streak
+    </span>
+
+    <button (click)="checkIn(habit._id)">Mark Done Today</button>
+    <button (click)="deleteHabit(habit._id)">Delete</button>
+
+  </div>
+
+  <!-- *ngIf only renders this block when habits.length is 0 -
+       a simple empty-state message. -->
+  <p *ngIf="habits.length === 0">No habits yet — add one above!</p>
+
+</div>
