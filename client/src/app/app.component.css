@@ -79,6 +79,41 @@
   color: var(--text-faint);
 }
 
+.main-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 2px 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.main-nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.main-nav a:hover {
+  background: var(--card-bg-subtle);
+}
+
+.main-nav a.active {
+  background: var(--primary);
+  color: white;
+}
+
+.main-nav a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
 @media (max-width: 680px) {
   .page {
     padding: 20px 0 48px;

@@ -33,6 +33,16 @@ interface HabitDraft {
   cue: string;
   reward: string;
   stackedAfter: string;
+  reminderTime: string;
+}
+
+interface HabitTemplate {
+  label: string;
+  name: string;
+  identity: string;
+  miniVersion: string;
+  cue: string;
+  reward: string;
 }
 
 const emptyDraft = (): HabitDraft => ({
@@ -41,8 +51,20 @@ const emptyDraft = (): HabitDraft => ({
   miniVersion: '',
   cue: '',
   reward: '',
-  stackedAfter: ''
+  stackedAfter: '',
+  reminderTime: ''
 });
+
+const HABIT_TEMPLATES: HabitTemplate[] = [
+  { label: 'Drink water', name: 'Drink a glass of water', identity: 'I am someone who takes care of their body', miniVersion: 'Drink one sip', cue: 'After I wake up', reward: 'Feel refreshed' },
+  { label: 'Read', name: 'Read', identity: 'I am a reader', miniVersion: 'Read one page', cue: 'After breakfast', reward: '5 minutes of guilt-free downtime' },
+  { label: 'Exercise', name: 'Exercise', identity: 'I am an active person', miniVersion: 'Put on my workout clothes', cue: 'After work', reward: 'A hot shower' },
+  { label: 'Meditate', name: 'Meditate', identity: 'I am a calm, focused person', miniVersion: 'Take 3 deep breaths', cue: 'Before checking my phone in the morning', reward: 'A moment of quiet' },
+  { label: 'Journal', name: 'Journal', identity: 'I am reflective and self-aware', miniVersion: 'Write one sentence', cue: 'Before bed', reward: 'Closing the notebook feeling lighter' },
+  { label: 'Tidy up', name: 'Tidy one surface', identity: 'I am an organized person', miniVersion: 'Put away one item', cue: 'When I get home', reward: 'A clean spot to look at' },
+  { label: 'Learn a language', name: 'Practice a language', identity: 'I am a lifelong learner', miniVersion: 'Review 5 words', cue: 'During my commute', reward: 'One point on my streak' },
+  { label: 'Track spending', name: "Track today's spending", identity: 'I am financially disciplined', miniVersion: 'Open my budget app', cue: 'After dinner', reward: 'Watching my savings grow' }
+];
 
 @Component({
   selector: 'app-habit-list',
@@ -79,6 +101,9 @@ export class HabitListComponent implements OnInit {
     { law: 'Make it Easy', field: '2-Minute Version', hint: 'Shrink it down so starting takes no willpower.' },
     { law: 'Make it Satisfying', field: 'Reward', hint: 'Give yourself an immediate, small payoff.' }
   ];
+
+  readonly templates = HABIT_TEMPLATES;
+  selectedTemplate = '';
 
   habits: any[] = [];
   newHabit: HabitDraft = emptyDraft();
@@ -138,6 +163,20 @@ export class HabitListComponent implements OnInit {
     });
   }
 
+  applyTemplate() {
+    const template = this.templates.find((t) => t.label === this.selectedTemplate);
+    if (!template) return;
+
+    this.newHabit = {
+      ...this.newHabit,
+      name: template.name,
+      identity: template.identity,
+      miniVersion: template.miniVersion,
+      cue: template.cue,
+      reward: template.reward
+    };
+  }
+
   addHabit() {
     if (!this.newHabit.name.trim() || this.isAddingHabit) return;
 
@@ -147,7 +186,8 @@ export class HabitListComponent implements OnInit {
       miniVersion: this.newHabit.miniVersion.trim(),
       cue: this.newHabit.cue.trim(),
       reward: this.newHabit.reward.trim(),
-      stackedAfter: this.newHabit.stackedAfter || null
+      stackedAfter: this.newHabit.stackedAfter || null,
+      reminderTime: this.newHabit.reminderTime || ''
     };
 
     this.isAddingHabit = true;
@@ -155,6 +195,7 @@ export class HabitListComponent implements OnInit {
       next: () => {
         this.isAddingHabit = false;
         this.newHabit = emptyDraft();
+        this.selectedTemplate = '';
         this.loadHabits();
       },
       error: (err) => {
@@ -172,7 +213,8 @@ export class HabitListComponent implements OnInit {
       miniVersion: habit.miniVersion || '',
       cue: habit.cue || '',
       reward: habit.reward || '',
-      stackedAfter: habit.stackedAfter || ''
+      stackedAfter: habit.stackedAfter || '',
+      reminderTime: habit.reminderTime || ''
     };
   }
 
@@ -190,7 +232,8 @@ export class HabitListComponent implements OnInit {
       miniVersion: this.editDraft.miniVersion.trim(),
       cue: this.editDraft.cue.trim(),
       reward: this.editDraft.reward.trim(),
-      stackedAfter: this.editDraft.stackedAfter || null
+      stackedAfter: this.editDraft.stackedAfter || null,
+      reminderTime: this.editDraft.reminderTime || ''
     };
 
     this.isSavingEdit = true;

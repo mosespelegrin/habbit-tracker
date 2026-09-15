@@ -1,25 +1,25 @@
 const dotenv=require("dotenv");
 const cors=require("cors");
 const express=require("express");
-const crypto=require("crypto");
 const path=require("path");
 const connectDB=require("./config/db.js");
+const startReminderScheduler=require("./utils/reminderScheduler.js");
 const app=express();
 
 dotenv.config();
 app.port=process.env.PRT || 3000;
 const isProduction=process.env.NODE_ENV==="production";
-const apiKey=process.env.HABIT_TRACKER_API_KEY;
 const allowedOrigins=(process.env.CLIENT_ORIGINS || "http://localhost:4200,http://127.0.0.1:4200")
     .split(",")
     .map((origin)=>origin.trim())
     .filter(Boolean);
 
-if(isProduction && !apiKey){
-    throw new Error("HABIT_TRACKER_API_KEY must be set in production");
+if(!process.env.JWT_SECRET){
+    throw new Error("JWT_SECRET must be set - generate one with `node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\"`");
 }
 
 connectDB();
+startReminderScheduler();
 
 //middleware
 app.disable("x-powered-by");
@@ -67,27 +67,9 @@ app.use((req,res,next)=>{
     next();
 });
 
-app.use(express.json({limit:"10kb"}));
-
-app.use("/api",(req,res,next)=>{
-    if(!apiKey){
-        if(isProduction){
-            return res.status(503).json({message:"API key is not configured"});
-        }
-
-        return next();
-    }
-
-    const providedKey=req.get("x-api-key") || "";
-    const providedBuffer=Buffer.from(providedKey);
-    const expectedBuffer=Buffer.from(apiKey);
-
-    if(providedBuffer.length!==expectedBuffer.length || !crypto.timingSafeEqual(providedBuffer,expectedBuffer)){
-        return res.status(401).json({message:"Valid API key required"});
-    }
-
-    next();
-});
+// Data import/export carries a full backup, so it gets a larger body limit than the rest of the API.
+app.use("/api/data",express.json({limit:"5mb"}));
+app.use(express.json({limit:"256kb"}));
 
 app.use((req,res,next)=>{
     res.on("finish",()=>{
@@ -99,8 +81,13 @@ app.use((req,res,next)=>{
     next();
 });
 
+app.use("/api/auth",require("./routes/auth.js"));
 app.use("/api/habits",require("./routes/habits.js"));
 app.use("/api/checkins",require("./routes/checkins.js"));
+app.use("/api/scorecard",require("./routes/scorecard.js"));
+app.use("/api/weekly-reviews",require("./routes/weeklyReview.js"));
+app.use("/api/push",require("./routes/push.js"));
+app.use("/api/data",require("./routes/data.js"));
 
 if(isProduction){
     const clientDistPath=path.join(__dirname,"..","client","dist","client","browser");

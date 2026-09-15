@@ -3,6 +3,9 @@ const router=express.Router();
 const mongoose=require("mongoose");
 const Habit=require("../models/habit.js");
 const CheckIn = require("../models/chekIn.js");
+const requireAuth=require("../middleware/auth.js");
+
+router.use(requireAuth);
 
 const isValidObjectId=(id)=>typeof id==="string" && /^[a-f\d]{24}$/i.test(id) && mongoose.Types.ObjectId.isValid(id);
 const sendServerError=(res)=>{
@@ -19,12 +22,62 @@ const toDateKey = (date) => {
     return `${year}-${month}-${day}`;
 };
 
+router.get("/trend", async (req, res) => {
+    try {
+        const requestedWeeks = parseInt(req.query.weeks, 10) || 12;
+        const weeks = Math.min(Math.max(requestedWeeks, 1), 52);
+
+        const habits = await Habit.find({ owner: req.userId }).select("_id");
+        const habitIds = habits.map((habit) => habit._id);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(today);
+        start.setDate(start.getDate() - (weeks * 7 - 1));
+        const end = new Date(today);
+        end.setHours(23, 59, 59, 999);
+
+        const checkins = habitIds.length
+            ? await CheckIn.find({ habit: { $in: habitIds }, done: true, date: { $gte: start, $lte: end } }).select("date")
+            : [];
+
+        const doneCountByWeek = new Array(weeks).fill(0);
+        checkins.forEach((checkin) => {
+            const day = new Date(checkin.date);
+            day.setHours(0, 0, 0, 0);
+            const dayIndex = Math.round((day.getTime() - start.getTime()) / 86400000);
+            const weekIndex = Math.floor(dayIndex / 7);
+            if (weekIndex >= 0 && weekIndex < weeks) doneCountByWeek[weekIndex]++;
+        });
+
+        const possiblePerWeek = habitIds.length * 7;
+        const trend = doneCountByWeek.map((doneCount, index) => {
+            const weekStart = new Date(start);
+            weekStart.setDate(start.getDate() + index * 7);
+            return {
+                weekStart: toDateKey(weekStart),
+                completionRate: possiblePerWeek ? Math.round((doneCount / possiblePerWeek) * 100) : 0
+            };
+        });
+
+        res.json(trend);
+    } catch (error) {
+        console.error("Failed to load completion trend", error);
+        sendServerError(res);
+    }
+});
+
 router.get("/history/:habitId", async (req, res) => {
     if(!isValidObjectId(req.params.habitId)){
         return res.status(400).json({message:"Invalid habit id"});
     }
 
     try {
+        const habitExists=await Habit.exists({_id:req.params.habitId,owner:req.userId});
+        if(!habitExists){
+            return res.status(404).json({message:"Habit not found"});
+        }
+
         const requestedDays = parseInt(req.query.days, 10) || 90;
         const days = Math.min(Math.max(requestedDays, 1), 365);
         const end = new Date();
@@ -70,7 +123,7 @@ router.post("/:habitId/",async(req,res)=>{
     }
 
     try{
-        const habitExists=await Habit.exists({_id:req.params.habitId});
+        const habitExists=await Habit.exists({_id:req.params.habitId,owner:req.userId});
         if(!habitExists){
             return res.status(404).json({message:"Habit not found"});
         }
@@ -112,6 +165,11 @@ router.get("/streaks/:habitId", async (req, res) => {
     }
 
     try {
+        const habitExists=await Habit.exists({_id:req.params.habitId,owner:req.userId});
+        if(!habitExists){
+            return res.status(404).json({message:"Habit not found"});
+        }
+
         const checkins = await CheckIn.find({
             habit: req.params.habitId,
             done: true

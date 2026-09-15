@@ -1,0 +1,39 @@
+<div class="panel">
+  <h2>Weekly Review</h2>
+  <p class="panel-subtitle">
+    A short Sunday-style check-in: what worked, what didn't, and one small tweak for next week.
+    Week of {{ currentWeekStart }}.
+  </p>
+
+  <p class="loading-state" *ngIf="isLoading" role="status" aria-live="polite">Loading this week's review...</p>
+
+  <form *ngIf="!isLoading" (ngSubmit)="save()">
+    <div class="field">
+      <label for="review-wins">What worked this week?</label>
+      <textarea id="review-wins" [(ngModel)]="wins" name="wins" placeholder="Habits that stuck, streaks kept alive..."></textarea>
+    </div>
+    <div class="field">
+      <label for="review-misses">What didn't?</label>
+      <textarea id="review-misses" [(ngModel)]="misses" name="misses" placeholder="Missed days, what got in the way..."></textarea>
+    </div>
+    <div class="field">
+      <label for="review-tweak">One small tweak for next week</label>
+      <textarea id="review-tweak" [(ngModel)]="tweak" name="tweak" placeholder="e.g. Move my run to the morning"></textarea>
+    </div>
+
+    <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+    <p class="success-message" *ngIf="savedMessage" role="status" aria-live="polite">{{ savedMessage }}</p>
+
+    <button type="submit" [disabled]="isSaving">{{ isSaving ? 'Saving...' : 'Save review' }}</button>
+  </form>
+
+  <section class="past-reviews" *ngIf="pastReviews.length">
+    <h3>Past reviews</h3>
+    <details class="past-review" *ngFor="let review of pastReviews">
+      <summary>Week of {{ review.weekStart }}</summary>
+      <p *ngIf="review.wins"><strong>Worked:</strong> {{ review.wins }}</p>
+      <p *ngIf="review.misses"><strong>Didn't:</strong> {{ review.misses }}</p>
+      <p *ngIf="review.tweak"><strong>Tweak:</strong> {{ review.tweak }}</p>
+    </details>
+  </section>
+</div>

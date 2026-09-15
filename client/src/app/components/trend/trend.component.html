@@ -1,0 +1,42 @@
+<div class="panel">
+  <h2>Completion Trend</h2>
+  <p class="panel-subtitle">Weekly completion rate across all your habits, last {{ weeks.length || 12 }} weeks.</p>
+
+  <p class="loading-state" *ngIf="isLoading" role="status" aria-live="polite">Loading your trend...</p>
+  <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+
+  <ng-container *ngIf="!isLoading && weeks.length">
+    <p class="sr-only">{{ summary }}</p>
+
+    <svg
+      class="trend-chart"
+      [attr.viewBox]="'0 0 ' + chartWidth + ' ' + (chartHeight + 30)"
+      [attr.width]="chartWidth"
+      [attr.height]="chartHeight + 30"
+      role="img"
+      [attr.aria-label]="summary"
+    >
+      <g *ngFor="let week of weeks; let i = index">
+        <title>{{ week.weekStart }}: {{ week.completionRate }}% complete</title>
+        <rect
+          class="trend-bar"
+          [attr.x]="i * (barWidth + barGap)"
+          [attr.y]="chartHeight - barHeight(week.completionRate)"
+          [attr.width]="barWidth"
+          [attr.height]="barHeight(week.completionRate)"
+          rx="3"
+        ></rect>
+        <text
+          class="trend-label"
+          [attr.x]="i * (barWidth + barGap) + barWidth / 2"
+          [attr.y]="chartHeight + 16"
+          text-anchor="middle"
+        >{{ shortLabel(week.weekStart) }}</text>
+      </g>
+    </svg>
+
+    <p class="trend-summary">{{ summary }}</p>
+  </ng-container>
+
+  <p *ngIf="!isLoading && !weeks.length" class="empty">No completion data yet - check in on a habit to start your trend.</p>
+</div>

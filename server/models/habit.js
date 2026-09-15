@@ -1,5 +1,10 @@
 const mongoose=require('mongoose');
 const habitSchema=new mongoose.Schema({
+    owner:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
+        required:true
+    },
     name:{
         type:String,
         required:true,
@@ -34,6 +39,14 @@ const habitSchema=new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"Habit",
         default:null
+    },
+    reminderTime:{
+        type:String,
+        default:"",
+        validate:{
+            validator:(value)=>value==="" || /^([01]\d|2[0-3]):([0-5]\d)$/.test(value),
+            message:"reminderTime must be in HH:MM 24-hour format"
+        }
     },
     createdAt:{
         type:Date,

@@ -1,0 +1,107 @@
+.panel {
+  max-width: 760px;
+  margin: 0 auto 40px;
+  padding: 24px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 1.5rem;
+}
+
+.panel-subtitle {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: var(--card-bg);
+  color: var(--text);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
+  border-color: var(--primary);
+}
+
+.panel button[type="submit"],
+.panel button.primary {
+  min-height: 44px;
+  padding: 10px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel button[type="submit"]:hover:not(:disabled),
+.panel button.primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.panel button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.panel button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.panel .error {
+  color: var(--danger-dark);
+  font-size: 0.85rem;
+}
+
+.panel .success-message {
+  color: var(--success-dark);
+  font-size: 0.85rem;
+}
+
+.panel .loading-state {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.panel .empty {
+  color: var(--text-faint);
+}

@@ -1,0 +1,21 @@
+<div class="auth-card">
+  <h2>Welcome back</h2>
+  <p class="auth-subtitle">Log in to keep your streaks alive.</p>
+
+  <form (ngSubmit)="submit()">
+    <div class="field">
+      <label for="login-email">Email</label>
+      <input id="login-email" type="email" name="email" autocomplete="email" [(ngModel)]="email" required />
+    </div>
+    <div class="field">
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" name="password" autocomplete="current-password" [(ngModel)]="password" required />
+    </div>
+
+    <p class="auth-error" *ngIf="error" role="alert">{{ error }}</p>
+
+    <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Logging in...' : 'Log in' }}</button>
+  </form>
+
+  <p class="auth-switch">New here? <a routerLink="/register">Create an account</a></p>
+</div>

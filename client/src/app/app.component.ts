@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
-import { HabitListComponent } from './components/habit-list/habit-list.component';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from './services/auth.service';
 
 const QUOTES: string[] = [
   'You do not rise to the level of your goals. You fall to the level of your systems.',
@@ -15,7 +15,7 @@ const QUOTES: string[] = [
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HabitListComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -24,7 +24,7 @@ export class AppComponent {
   quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   darkMode = false;
 
-  constructor() {
+  constructor(public authService: AuthService) {
     let saved: string | null = null;
     try {
       saved = localStorage.getItem('habitTrackerTheme');

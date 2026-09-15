@@ -3,12 +3,15 @@ const router=express.Router();
 const mongoose=require("mongoose");
 const Habit=require("../models/habit.js");
 const CheckIn=require("../models/chekIn.js");
+const requireAuth=require("../middleware/auth.js");
+
+router.use(requireAuth);
 
 const pickHabitFields=(body)=>{
     const habit={};
     const source=body || {};
 
-    ["name","identity","miniVersion","cue","reward","stackedAfter"].forEach((field)=>{
+    ["name","identity","miniVersion","cue","reward","stackedAfter","reminderTime"].forEach((field)=>{
         if(Object.prototype.hasOwnProperty.call(source,field)){
             habit[field]=source[field];
         }
@@ -48,6 +51,10 @@ const validateHabitInput=(habit,{requireName=false}={})=>{
         errors.push("stackedAfter must be a valid habit id");
     }
 
+    if(habit.reminderTime!==undefined && habit.reminderTime!=="" && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(habit.reminderTime)){
+        errors.push("reminderTime must be in HH:MM 24-hour format");
+    }
+
     return errors;
 };
 
@@ -55,8 +62,8 @@ const validateHabitInput=(habit,{requireName=false}={})=>{
 
 router.get("/",async(req,res)=>{
     try{
-        const habits=await Habit.find();
-        res.json(habits);       
+        const habits=await Habit.find({owner:req.userId});
+        res.json(habits);
     }
     catch(error){
         console.error("Failed to load habits",error);
@@ -74,13 +81,13 @@ router.post("/", async(req,res)=>{
         }
 
         if(habitData.stackedAfter){
-            const parentExists=await Habit.exists({_id:habitData.stackedAfter});
+            const parentExists=await Habit.exists({_id:habitData.stackedAfter,owner:req.userId});
             if(!parentExists){
                 return res.status(400).json({message:"stackedAfter habit not found"});
             }
         }
 
-        const habit=new Habit(habitData);
+        const habit=new Habit({...habitData,owner:req.userId});
         const savedHabit=await habit.save();
         res.status(201).json(savedHabit);
     }
@@ -92,7 +99,7 @@ router.post("/", async(req,res)=>{
 
 router.get("/stacks",async(req,res)=>{
     try{
-        const habits=await Habit.find().sort({ createdAt: 1 });
+        const habits=await Habit.find({owner:req.userId}).sort({ createdAt: 1 });
         const habitsById=new Map(habits.map((habit)=>[habit._id.toString(),habit]));
         const childrenByParent=new Map();
 
@@ -146,7 +153,7 @@ router.get("/:id/identity-stats",async(req,res)=>{
     }
 
     try{
-        const habit=await Habit.findById(req.params.id);
+        const habit=await Habit.findOne({_id:req.params.id,owner:req.userId});
         if(!habit){
             return res.status(404).json({message:"Habit not found"});
         }
@@ -180,7 +187,7 @@ router.get("/:id",async(req,res)=>{
     }
 
     try{
-        const habit=await Habit.findById(req.params.id);
+        const habit=await Habit.findOne({_id:req.params.id,owner:req.userId});
         if(!habit){
             return res.status(404).json({message:"Habit not found"});
         }
@@ -197,7 +204,7 @@ router.put("/:id",async(req,res)=>{
         return res.status(400).json({message:"Invalid habit id"});
     }
 
-    try{ 
+    try{
         const habitData=pickHabitFields(req.body);
         const errors=validateHabitInput(habitData);
 
@@ -210,17 +217,17 @@ router.put("/:id",async(req,res)=>{
                 return res.status(400).json({message:"A habit cannot be stacked after itself"});
             }
 
-            const parentExists=await Habit.exists({_id:habitData.stackedAfter});
+            const parentExists=await Habit.exists({_id:habitData.stackedAfter,owner:req.userId});
             if(!parentExists){
                 return res.status(400).json({message:"stackedAfter habit not found"});
             }
         }
 
-        const habit=await Habit.findByIdAndUpdate(req.params.id,habitData,{new:true,runValidators:true});
+        const habit=await Habit.findOneAndUpdate({_id:req.params.id,owner:req.userId},habitData,{new:true,runValidators:true});
         if(!habit){
             return res.status(404).json({message:"Habit not found"});
-        }   
-        res.status(200).json(habit);                
+        }
+        res.status(200).json(habit);
     }catch(error){
         console.error("Failed to update habit",error);
         res.status(400).json({message:"Invalid habit data"});
@@ -233,10 +240,11 @@ router.delete("/:id",async(req,res)=>{
     }
 
     try{
-    const habit =await Habit.findByIdAndDelete(req.params.id);
+    const habit =await Habit.findOneAndDelete({_id:req.params.id,owner:req.userId});
     if(!habit){
         return res.status(404).json({message:"Habit not found"});
     }
+    await CheckIn.deleteMany({habit:req.params.id});
     res.status(200).json(habit);
 }catch(error){
     console.error("Failed to delete habit",error);

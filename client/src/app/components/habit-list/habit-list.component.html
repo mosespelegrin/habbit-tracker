@@ -42,6 +42,13 @@
   </details>
 
   <form class="add-habit" (ngSubmit)="addHabit()">
+    <div class="field template-field">
+      <label for="new-habit-template">Quick add from template</label>
+      <select id="new-habit-template" [(ngModel)]="selectedTemplate" name="template" (ngModelChange)="applyTemplate()">
+        <option value="">Start from scratch</option>
+        <option *ngFor="let template of templates" [value]="template.label">{{ template.label }}</option>
+      </select>
+    </div>
     <div class="field">
       <label for="new-habit-name">Habit name</label>
       <input
@@ -102,6 +109,15 @@
         </option>
       </select>
     </div>
+    <div class="field">
+      <label for="new-habit-reminder">Reminder time</label>
+      <input
+        id="new-habit-reminder"
+        type="time"
+        [(ngModel)]="newHabit.reminderTime"
+        name="newHabitReminderTime"
+      />
+    </div>
     <button type="submit" [disabled]="isAddingHabit">{{ isAddingHabit ? 'Adding...' : 'Add Habit' }}</button>
   </form>
 
@@ -140,6 +156,10 @@
             </option>
           </select>
         </div>
+        <div class="field">
+          <label [attr.for]="'edit-reminder-' + habit._id">Reminder time</label>
+          <input [id]="'edit-reminder-' + habit._id" type="time" [(ngModel)]="editDraft.reminderTime" name="editReminderTime" />
+        </div>
         <div class="edit-actions">
           <button type="submit" [disabled]="isSavingEdit">{{ isSavingEdit ? 'Saving...' : 'Save' }}</button>
           <button class="ghost" type="button" (click)="cancelEdit()">Cancel</button>
@@ -153,6 +173,7 @@
         <span class="habit-name">{{ displayedHabitName(habit) }}</span>
         <span class="cue" *ngIf="habit.cue">Cue: {{ habit.cue }}</span>
         <span class="reward" *ngIf="habit.reward">Reward: {{ habit.reward }}</span>
+        <span class="reminder" *ngIf="habit.reminderTime">Reminder: {{ habit.reminderTime }}</span>
 
         <button
           class="mini-toggle"

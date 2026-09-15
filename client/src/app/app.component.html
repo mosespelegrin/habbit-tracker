@@ -25,5 +25,13 @@
 
   <p class="quote">"{{ quote }}"<span class="quote-attr"> — James Clear, Atomic Habits</span></p>
 
-  <app-habit-list></app-habit-list>
+  <nav class="main-nav" *ngIf="authService.isAuthenticated()">
+    <a routerLink="/habits" routerLinkActive="active">Habits</a>
+    <a routerLink="/scorecard" routerLinkActive="active">Scorecard</a>
+    <a routerLink="/weekly-review" routerLinkActive="active">Weekly Review</a>
+    <a routerLink="/trends" routerLinkActive="active">Trends</a>
+    <a routerLink="/settings" routerLinkActive="active">Settings</a>
+  </nav>
+
+  <router-outlet></router-outlet>
 </div>

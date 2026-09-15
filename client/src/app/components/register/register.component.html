@@ -1,0 +1,36 @@
+<div class="auth-card">
+  <h2>Create your account</h2>
+  <p class="auth-subtitle">Small habits, tracked consistently, compound.</p>
+
+  <form (ngSubmit)="submit()">
+    <div class="field">
+      <label for="register-email">Email</label>
+      <input id="register-email" type="email" name="email" autocomplete="email" [(ngModel)]="email" required />
+    </div>
+    <div class="field">
+      <label for="register-password">Password</label>
+      <input id="register-password" type="password" name="password" autocomplete="new-password" [(ngModel)]="password" required />
+    </div>
+
+    <ul class="password-rules" *ngIf="password">
+      <li *ngFor="let rule of passwordRules" [class.met]="rule.test(password, email)">
+        <span class="indicator">{{ rule.test(password, email) ? '✓' : '·' }}</span>
+        {{ rule.label }}
+      </li>
+    </ul>
+
+    <div class="field">
+      <label for="register-confirm">Confirm password</label>
+      <input id="register-confirm" type="password" name="confirmPassword" autocomplete="new-password" [(ngModel)]="confirmPassword" required />
+    </div>
+    <p class="auth-error" *ngIf="confirmPassword && !passwordsMatch">Passwords don't match</p>
+
+    <p class="auth-error" *ngIf="error" role="alert">{{ error }}</p>
+
+    <button type="submit" [disabled]="isSubmitting || !passwordValid || !passwordsMatch">
+      {{ isSubmitting ? 'Creating account...' : 'Create account' }}
+    </button>
+  </form>
+
+  <p class="auth-switch">Already have an account? <a routerLink="/login">Log in</a></p>
+</div>

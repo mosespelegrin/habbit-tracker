@@ -1,0 +1,63 @@
+<div class="panel">
+  <h2>Habit Scorecard</h2>
+  <p class="panel-subtitle">
+    From ch. 1 of Atomic Habits: list your everyday habits and mark each one
+    <strong class="tag positive">+</strong> good,
+    <strong class="tag negative">−</strong> bad, or
+    <strong class="tag neutral">=</strong> neutral. Awareness comes before change.
+  </p>
+
+  <form class="add-entry" (ngSubmit)="add()">
+    <div class="field">
+      <label for="scorecard-text">Habit or behavior</label>
+      <input id="scorecard-text" type="text" [(ngModel)]="newText" name="text" placeholder="e.g. Checking my phone right after waking up" required />
+    </div>
+    <div class="field rating-field">
+      <label for="scorecard-rating">Rating</label>
+      <select id="scorecard-rating" [(ngModel)]="newRating" name="rating">
+        <option value="positive">+ Good habit</option>
+        <option value="negative">− Bad habit</option>
+        <option value="neutral">= Neutral habit</option>
+      </select>
+    </div>
+    <button type="submit" [disabled]="isAdding">{{ isAdding ? 'Adding...' : 'Add to scorecard' }}</button>
+  </form>
+
+  <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+  <p class="loading-state" *ngIf="isLoading" role="status" aria-live="polite">Loading your scorecard...</p>
+
+  <div class="rating-columns" *ngIf="!isLoading">
+    <section class="rating-column">
+      <h3><span class="tag positive">+</span> Good</h3>
+      <ul>
+        <li *ngFor="let entry of byRating('positive')">
+          {{ entry.text }}
+          <button type="button" (click)="remove(entry._id)" [attr.aria-label]="'Remove ' + entry.text">×</button>
+        </li>
+        <li class="empty" *ngIf="!byRating('positive').length">Nothing here yet</li>
+      </ul>
+    </section>
+
+    <section class="rating-column">
+      <h3><span class="tag negative">−</span> Bad</h3>
+      <ul>
+        <li *ngFor="let entry of byRating('negative')">
+          {{ entry.text }}
+          <button type="button" (click)="remove(entry._id)" [attr.aria-label]="'Remove ' + entry.text">×</button>
+        </li>
+        <li class="empty" *ngIf="!byRating('negative').length">Nothing here yet</li>
+      </ul>
+    </section>
+
+    <section class="rating-column">
+      <h3><span class="tag neutral">=</span> Neutral</h3>
+      <ul>
+        <li *ngFor="let entry of byRating('neutral')">
+          {{ entry.text }}
+          <button type="button" (click)="remove(entry._id)" [attr.aria-label]="'Remove ' + entry.text">×</button>
+        </li>
+        <li class="empty" *ngIf="!byRating('neutral').length">Nothing here yet</li>
+      </ul>
+    </section>
+  </div>
+</div>
