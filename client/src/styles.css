@@ -1,1 +1,104 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root,
+:root[data-theme="light"] {
+  --bg: #f1f5f9;
+  --bg-gradient: linear-gradient(180deg, #eef2ff 0%, #f1f5f9 320px);
+  --card-bg: #ffffff;
+  --card-bg-subtle: #f8fafc;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --success: #22c55e;
+  --success-dark: #16a34a;
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --danger-bg: #fee2e2;
+  --danger-border: #fecaca;
+  --danger-text: #991b1b;
+  --orange: #f97316;
+  --heatmap-empty: #e2e8f0;
+  --shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --bg-gradient: linear-gradient(180deg, #1e1b4b 0%, #0f172a 320px);
+  --card-bg: #1e293b;
+  --card-bg-subtle: #16213a;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --border: #334155;
+  --border-strong: #475569;
+  --primary: #818cf8;
+  --primary-dark: #6366f1;
+  --success: #4ade80;
+  --success-dark: #22c55e;
+  --danger: #f87171;
+  --danger-dark: #ef4444;
+  --danger-bg: #451a1a;
+  --danger-border: #7f1d1d;
+  --danger-text: #fca5a5;
+  --orange: #fb923c;
+  --heatmap-empty: #334155;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f172a;
+    --bg-gradient: linear-gradient(180deg, #1e1b4b 0%, #0f172a 320px);
+    --card-bg: #1e293b;
+    --card-bg-subtle: #16213a;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-faint: #64748b;
+    --border: #334155;
+    --border-strong: #475569;
+    --primary: #818cf8;
+    --primary-dark: #6366f1;
+    --success: #4ade80;
+    --success-dark: #22c55e;
+    --danger: #f87171;
+    --danger-dark: #ef4444;
+    --danger-bg: #451a1a;
+    --danger-border: #7f1d1d;
+    --danger-text: #fca5a5;
+    --orange: #fb923c;
+    --heatmap-empty: #334155;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-gradient), var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

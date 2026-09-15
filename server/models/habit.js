@@ -2,7 +2,38 @@ const mongoose=require('mongoose');
 const habitSchema=new mongoose.Schema({
     name:{
         type:String,
-        required:true
+        required:true,
+        trim:true,
+        maxlength:120
+    },
+    identity:{
+        type:String,
+        default:"",
+        trim:true,
+        maxlength:240
+    },
+    miniVersion:{
+        type:String,
+        default:"",
+        trim:true,
+        maxlength:120
+    },
+    cue:{
+        type:String,
+        default:"",
+        trim:true,
+        maxlength:160
+    },
+    reward:{
+        type:String,
+        default:"",
+        trim:true,
+        maxlength:160
+    },
+    stackedAfter:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Habit",
+        default:null
     },
     createdAt:{
         type:Date,

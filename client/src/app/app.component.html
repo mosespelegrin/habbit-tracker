@@ -1,1 +1,29 @@
-<app-habit-list></app-habit-list>
+<div class="page">
+  <header class="page-header">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"></circle>
+        <circle cx="12" cy="12" r="7" stroke-dasharray="2 3"></circle>
+        <circle cx="12" cy="12" r="10.5" stroke-dasharray="1 4"></circle>
+      </svg>
+      <div>
+        <h1>Atomic</h1>
+        <p class="tagline">Small habits. Remarkable results.</p>
+      </div>
+    </div>
+    <button class="theme-toggle" type="button" (click)="toggleTheme()" [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+      <svg *ngIf="darkMode" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+      </svg>
+      <svg *ngIf="!darkMode" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"></path>
+      </svg>
+      <span>{{ darkMode ? 'Light' : 'Dark' }}</span>
+    </button>
+  </header>
+
+  <p class="quote">"{{ quote }}"<span class="quote-attr"> — James Clear, Atomic Habits</span></p>
+
+  <app-habit-list></app-habit-list>
+</div>

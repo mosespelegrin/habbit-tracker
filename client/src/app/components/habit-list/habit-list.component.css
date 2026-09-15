@@ -1,78 +1,223 @@
 /* habit-list.component.css */
 
 .habit-tracker {
-  max-width: 480px;
-  margin: 40px auto;
+  max-width: 760px;
+  margin: 0 auto 40px;
   padding: 24px;
   font-family: 'Segoe UI', Arial, sans-serif;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  position: relative;
 }
 
 h2 {
   margin-top: 0;
-  color: #1e293b;
+  color: var(--text);
   font-size: 1.5rem;
+}
+
+/* TOAST */
+.toast {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90%;
+  padding: 10px 18px;
+  background: var(--success-dark);
+  color: white;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 5;
+}
+
+.toast-error {
+  background: var(--danger-dark);
+}
+
+.loading-state {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* DASHBOARD */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  background: var(--card-bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* FOUR LAWS */
+.four-laws {
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: var(--card-bg-subtle);
+}
+
+.four-laws summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.four-laws ul {
+  list-style: none;
+  margin: 12px 0 4px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.four-laws li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.four-laws strong {
+  color: var(--primary);
+  min-width: 140px;
+}
+
+.four-laws-field {
+  padding: 2px 8px;
+  background: var(--border);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.four-laws-hint {
+  color: var(--text-muted);
+  flex-basis: 100%;
 }
 
 /* ADD HABIT FORM */
 .add-habit {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 24px;
 }
 
-.add-habit input {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s ease;
-  /* transition: smoothly animates the border-color change over 0.2s
-     instead of it snapping instantly - subtle, but noticeable */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.add-habit input:focus {
-  border-color: #6366f1;
+.field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.add-habit input,
+.add-habit select,
+.edit-form input,
+.edit-form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.add-habit input:focus,
+.add-habit select:focus,
+.edit-form input:focus,
+.edit-form select:focus {
+  border-color: var(--primary);
+}
+
+.add-habit input:focus-visible,
+.add-habit select:focus-visible,
+.edit-form input:focus-visible,
+.edit-form select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 .add-habit button {
+  min-height: 44px;
   padding: 10px 16px;
-  background: #6366f1;
+  background: var(--primary);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
+  grid-column: 1 / -1;
 }
 
-.add-habit button:hover {
-  background: #4f46e5;
+.add-habit button:hover:not(:disabled) {
+  background: var(--primary-dark);
 }
 
-.add-habit button:active {
+.add-habit button:active:not(:disabled) {
   transform: scale(0.96);
-  /* slight "press down" shrink effect on click - cheap, satisfying feedback */
+}
+
+.add-habit button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* HABIT ITEM ROW */
 .habit-item {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-
-  /* Animation: each habit row fades and slides in when it appears
-     (either on page load or right after adding a new one) */
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--card-bg-subtle);
+  border-radius: 8px;
+  border: 1px solid var(--border);
   animation: slideIn 0.35s ease;
 }
 
@@ -87,21 +232,59 @@ h2 {
   }
 }
 
+.habit-main,
+.habit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.habit-actions {
+  align-items: flex-end;
+  min-width: 150px;
+}
+
+.identity {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  font-style: italic;
+}
+
 .habit-name {
   font-weight: 600;
-  color: #1e293b;
-  flex: 1;
+  color: var(--text);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.cue,
+.reward,
+.proof-count {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.reward {
+  color: var(--success-dark);
 }
 
 .streak {
   font-size: 0.9rem;
-  color: #f97316;
+  color: var(--orange);
   font-weight: 600;
   white-space: nowrap;
 }
 
-.habit-item button {
-  padding: 6px 12px;
+.best-streak {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.habit-item button,
+.mini-toggle {
+  min-height: 44px;
+  padding: 8px 14px;
   border-radius: 6px;
   border: none;
   font-size: 0.85rem;
@@ -109,32 +292,205 @@ h2 {
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.habit-item button:first-of-type {
-  /* "Mark Done Today" button */
-  background: #22c55e;
+.habit-item button:focus-visible,
+.mini-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.habit-actions button:first-of-type {
+  background: var(--success);
   color: white;
 }
 
-.habit-item button:first-of-type:hover {
-  background: #16a34a;
+.habit-actions button:first-of-type:hover:not(:disabled) {
+  background: var(--success-dark);
 }
 
-.habit-item button:last-of-type {
-  /* "Delete" button */
-  background: #ef4444;
+.habit-actions button:first-of-type:disabled {
+  background: var(--border-strong);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.edit-btn {
+  background: var(--card-bg);
+  color: var(--primary);
+  border: 1px solid var(--primary) !important;
+}
+
+.edit-btn:hover {
+  background: var(--card-bg-subtle);
+}
+
+.delete-btn {
+  background: var(--danger);
   color: white;
 }
 
-.habit-item button:last-of-type:hover {
-  background: #dc2626;
+.delete-btn:hover:not(:disabled) {
+  background: var(--danger-dark);
 }
 
-.habit-item button:active {
+.delete-btn:disabled,
+.add-habit button:disabled,
+.edit-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mini-toggle {
+  align-self: flex-start;
+  background: var(--card-bg-subtle);
+  color: var(--primary);
+  border: 1px solid var(--border-strong);
+}
+
+.mini-toggle:hover {
+  background: var(--border);
+}
+
+.habit-item button:active:not(:disabled) {
   transform: scale(0.94);
 }
 
+.danger-badge {
+  align-self: flex-start;
+  padding: 5px 8px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: 6px;
+  color: var(--danger-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-rows: repeat(7, 10px);
+  grid-auto-flow: column;
+  grid-auto-columns: 10px;
+  gap: 3px;
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+
+.heatmap-day {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--heatmap-empty);
+}
+
+.heatmap-day.done {
+  background: var(--success-dark);
+}
+
+.stack-view {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.stack-view h3 {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.stack-chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.stack-arrow {
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+/* EDIT FORM */
+.edit-form {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.edit-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+.edit-actions button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-actions button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.edit-actions button:first-child {
+  background: var(--primary);
+  color: white;
+}
+
+.edit-actions button:first-child:hover {
+  background: var(--primary-dark);
+}
+
+.edit-actions .ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong) !important;
+}
+
+.edit-actions .ghost:hover {
+  background: var(--card-bg-subtle);
+}
+
 p {
-  color: #94a3b8;
+  color: var(--text-faint);
   text-align: center;
   margin-top: 20px;
+}
+
+@media (max-width: 680px) {
+  .habit-tracker {
+    margin: 0 12px 24px;
+    padding: 18px;
+  }
+
+  .dashboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .add-habit,
+  .habit-item,
+  .edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .habit-actions {
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .habit-item {
+    animation: none;
+  }
 }

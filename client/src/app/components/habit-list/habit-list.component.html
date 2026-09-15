@@ -2,41 +2,222 @@
 
   <h2>Habit Streak Tracker</h2>
 
-  <!-- ADD HABIT FORM
-       [(ngModel)] is "two-way binding": it keeps newHabitName (in the .ts)
-       and this input box's value in sync automatically, both directions -
-       type in the box, newHabitName updates; change newHabitName in code,
-       the box updates too. Requires FormsModule (already imported). -->
-  <div class="add-habit">
-    <input
-      type="text"
-      [(ngModel)]="newHabitName"
-      placeholder="New habit name (e.g. Gym, Read 30 mins)"
-    />
-    <!-- (click) binds a DOM click event to a method on the component.
-         Same concept as onclick="" in plain HTML, but Angular's way. -->
-    <button (click)="addHabit()">Add Habit</button>
-  </div>
+  <div
+    class="toast"
+    *ngIf="toast"
+    [class.toast-error]="toastType === 'error'"
+    role="status"
+    aria-live="polite"
+    [@toastAnimation]
+  >{{ toast }}</div>
 
-  <!-- HABIT LIST
-       *ngFor repeats this whole block once per item in the habits array. -->
+  <section class="dashboard" *ngIf="habitCount">
+    <div class="stat-card">
+      <span class="stat-value">{{ doneTodayCount }}/{{ habitCount }}</span>
+      <span class="stat-label">Done today</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ completionRate }}%</span>
+      <span class="stat-label">Today's completion</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ longestActiveStreak }}</span>
+      <span class="stat-label">Longest active streak</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ bestStreakEver }}</span>
+      <span class="stat-label">Personal record</span>
+    </div>
+  </section>
+
+  <details class="four-laws">
+    <summary>The Four Laws of Behavior Change</summary>
+    <ul>
+      <li *ngFor="let item of fourLaws">
+        <strong>{{ item.law }}</strong>
+        <span class="four-laws-field">{{ item.field }}</span>
+        <span class="four-laws-hint">{{ item.hint }}</span>
+      </li>
+    </ul>
+  </details>
+
+  <form class="add-habit" (ngSubmit)="addHabit()">
+    <div class="field">
+      <label for="new-habit-name">Habit name</label>
+      <input
+        id="new-habit-name"
+        type="text"
+        [(ngModel)]="newHabit.name"
+        name="newHabitName"
+        placeholder="e.g. Gym, Read 30 mins"
+        required
+      />
+    </div>
+    <div class="field">
+      <label for="new-habit-identity">Identity</label>
+      <input
+        id="new-habit-identity"
+        type="text"
+        [(ngModel)]="newHabit.identity"
+        name="newHabitIdentity"
+        placeholder="e.g. I am a daily reader"
+      />
+    </div>
+    <div class="field">
+      <label for="new-habit-mini">2-minute version</label>
+      <input
+        id="new-habit-mini"
+        type="text"
+        [(ngModel)]="newHabit.miniVersion"
+        name="newHabitMiniVersion"
+        placeholder="e.g. Read 1 page"
+      />
+    </div>
+    <div class="field">
+      <label for="new-habit-cue">Cue</label>
+      <input
+        id="new-habit-cue"
+        type="text"
+        [(ngModel)]="newHabit.cue"
+        name="newHabitCue"
+        placeholder="e.g. After breakfast"
+      />
+    </div>
+    <div class="field">
+      <label for="new-habit-reward">Reward</label>
+      <input
+        id="new-habit-reward"
+        type="text"
+        [(ngModel)]="newHabit.reward"
+        name="newHabitReward"
+        placeholder="e.g. A coffee I enjoy"
+      />
+    </div>
+    <div class="field">
+      <label for="new-habit-stack">Stack after</label>
+      <select id="new-habit-stack" [(ngModel)]="newHabit.stackedAfter" name="newHabitStackedAfter">
+        <option value="">No stack</option>
+        <option *ngFor="let habit of habits" [value]="habit._id">
+          After {{ habit.name }}
+        </option>
+      </select>
+    </div>
+    <button type="submit" [disabled]="isAddingHabit">{{ isAddingHabit ? 'Adding...' : 'Add Habit' }}</button>
+  </form>
+
+  <p class="loading-state" *ngIf="isLoading" role="status" aria-live="polite">Loading your habits...</p>
+
   <div class="habit-item" *ngFor="let habit of habits" [@habitAnimation]>
 
-    <span class="habit-name">{{ habit.name }}</span>
+    <ng-container *ngIf="editingHabitId === habit._id; else viewMode">
+      <form class="edit-form" (ngSubmit)="saveEdit(habit._id)">
+        <div class="field">
+          <label [attr.for]="'edit-name-' + habit._id">Habit name</label>
+          <input [id]="'edit-name-' + habit._id" type="text" [(ngModel)]="editDraft.name" name="editName" required />
+        </div>
+        <div class="field">
+          <label [attr.for]="'edit-identity-' + habit._id">Identity</label>
+          <input [id]="'edit-identity-' + habit._id" type="text" [(ngModel)]="editDraft.identity" name="editIdentity" />
+        </div>
+        <div class="field">
+          <label [attr.for]="'edit-mini-' + habit._id">2-minute version</label>
+          <input [id]="'edit-mini-' + habit._id" type="text" [(ngModel)]="editDraft.miniVersion" name="editMiniVersion" />
+        </div>
+        <div class="field">
+          <label [attr.for]="'edit-cue-' + habit._id">Cue</label>
+          <input [id]="'edit-cue-' + habit._id" type="text" [(ngModel)]="editDraft.cue" name="editCue" />
+        </div>
+        <div class="field">
+          <label [attr.for]="'edit-reward-' + habit._id">Reward</label>
+          <input [id]="'edit-reward-' + habit._id" type="text" [(ngModel)]="editDraft.reward" name="editReward" />
+        </div>
+        <div class="field">
+          <label [attr.for]="'edit-stack-' + habit._id">Stack after</label>
+          <select [id]="'edit-stack-' + habit._id" [(ngModel)]="editDraft.stackedAfter" name="editStackedAfter">
+            <option value="">No stack</option>
+            <option *ngFor="let other of otherHabits(habit._id)" [value]="other._id">
+              After {{ other.name }}
+            </option>
+          </select>
+        </div>
+        <div class="edit-actions">
+          <button type="submit" [disabled]="isSavingEdit">{{ isSavingEdit ? 'Saving...' : 'Save' }}</button>
+          <button class="ghost" type="button" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </ng-container>
 
-    <!-- streaks[habit._id] looks up this specific habit's streak count
-         from the streaks object keyed by habit ID. -->
-    <span class="streak">
-      🔥 {{ streaks[habit._id] || 0 }} day streak
-    </span>
+    <ng-template #viewMode>
+      <div class="habit-main">
+        <span class="identity" *ngIf="habit.identity">{{ habit.identity }}</span>
+        <span class="habit-name">{{ displayedHabitName(habit) }}</span>
+        <span class="cue" *ngIf="habit.cue">Cue: {{ habit.cue }}</span>
+        <span class="reward" *ngIf="habit.reward">Reward: {{ habit.reward }}</span>
 
-    <button (click)="checkIn(habit._id)">Mark Done Today</button>
-    <button (click)="deleteHabit(habit._id)">Delete</button>
+        <button
+          class="mini-toggle"
+          *ngIf="habit.miniVersion"
+          type="button"
+          (click)="toggleMiniMode(habit._id)"
+        >
+          {{ miniMode[habit._id] ? 'Show full habit' : 'Too busy? Do the mini version' }}
+        </button>
+
+        <span class="danger-badge" *ngIf="isDangerZone(habit._id)">
+          Don't miss today - 2 misses breaks the chain.
+        </span>
+
+        <div class="heatmap" *ngIf="histories[habit._id]?.length" role="img" [attr.aria-label]="'Last ' + histories[habit._id].length + ' days check-in history'">
+          <span
+            class="heatmap-day"
+            *ngFor="let day of histories[habit._id]"
+            [class.done]="day.done"
+            [title]="day.date"
+          ></span>
+        </div>
+      </div>
+
+      <div class="habit-actions">
+        <span class="streak">
+          {{ streaks[habit._id]?.streak || 0 }} day streak
+        </span>
+        <span class="best-streak" *ngIf="(streaks[habit._id]?.bestStreak || 0) > (streaks[habit._id]?.streak || 0)">
+          Best: {{ streaks[habit._id]?.bestStreak }}
+        </span>
+        <span class="proof-count" *ngIf="identityStats[habit._id]?.identity">
+          Proven {{ identityStats[habit._id].provenCount }}x in {{ identityStats[habit._id].period }}
+        </span>
+        <button
+          type="button"
+          (click)="checkIn(habit._id)"
+          [disabled]="streaks[habit._id]?.doneToday || checkingInIds.has(habit._id)"
+        >
+          {{ streaks[habit._id]?.doneToday ? 'Done today' : (checkingInIds.has(habit._id) ? 'Saving...' : 'Mark Done Today') }}
+        </button>
+        <button type="button" class="edit-btn" (click)="startEdit(habit)">Edit</button>
+        <button
+          type="button"
+          class="delete-btn"
+          (click)="deleteHabit(habit._id)"
+          [disabled]="deletingIds.has(habit._id)"
+          [attr.aria-label]="'Delete ' + habit.name"
+        >
+          {{ deletingIds.has(habit._id) ? 'Deleting...' : 'Delete' }}
+        </button>
+      </div>
+    </ng-template>
 
   </div>
 
-  <!-- *ngIf only renders this block when habits.length is 0 -
-       a simple empty-state message. -->
-  <p *ngIf="habits.length === 0">No habits yet — add one above!</p>
+  <section class="stack-view" *ngIf="stackChains.length">
+    <h3>Habit Stacks</h3>
+    <div class="stack-chain" *ngFor="let stack of stackChains">
+      <span *ngFor="let item of stack.chain; let last = last">
+        {{ item }}<span class="stack-arrow" *ngIf="!last" aria-hidden="true">-></span>
+      </span>
+    </div>
+  </section>
+
+  <p *ngIf="!isLoading && habits.length === 0">No habits yet - add one above!</p>
 
 </div>
