@@ -1,0 +1,26 @@
+# Environment files (secrets) - never commit these, at any level of the repo
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# In case node_modules or a build output ever lands at the repo root
+/node_modules
+/dist
