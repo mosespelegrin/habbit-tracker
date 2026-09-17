@@ -12,22 +12,33 @@ const currentHHMMInZone = (timeZone) => {
     }
 };
 
+const dateKeyInZone = (date, timeZone) => {
+    try {
+        return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+    } catch {
+        return new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+    }
+};
+
 const sendDueReminders = async () => {
     const users = await User.find({ "pushSubscriptions.0": { $exists: true } });
     if (!users.length) return;
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Wide enough to cover "today" in any timezone relative to the server's clock.
+    const lookback = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
     for (const user of users) {
-        const nowHHMM = currentHHMMInZone(user.timezone || "UTC");
+        const timeZone = user.timezone || "UTC";
+        const nowHHMM = currentHHMMInZone(timeZone);
+        const todayKey = dateKeyInZone(new Date(), timeZone);
         const dueHabits = await Habit.find({ owner: user._id, reminderTime: nowHHMM });
         if (!dueHabits.length) continue;
 
         let subscriptionsChanged = false;
 
         for (const habit of dueHabits) {
-            const alreadyDone = await CheckIn.exists({ habit: habit._id, done: true, date: { $gte: startOfDay } });
+            const recentCheckIns = await CheckIn.find({ habit: habit._id, done: true, date: { $gte: lookback } }).select("date");
+            const alreadyDone = recentCheckIns.some((checkIn) => dateKeyInZone(checkIn.date, timeZone) === todayKey);
             if (alreadyDone) continue;
 
             const payload = JSON.stringify({
