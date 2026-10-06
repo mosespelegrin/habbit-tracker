@@ -23,7 +23,7 @@
       <label for="register-confirm">Confirm password</label>
       <input id="register-confirm" type="password" name="confirmPassword" autocomplete="new-password" [(ngModel)]="confirmPassword" required />
     </div>
-    <p class="auth-error" *ngIf="confirmPassword && !passwordsMatch">Passwords don't match</p>
+    <p class="auth-error" *ngIf="confirmPassword && !passwordsMatch" role="alert">Passwords don't match</p>
 
     <p class="auth-error" *ngIf="error" role="alert">{{ error }}</p>
 

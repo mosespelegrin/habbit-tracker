@@ -4,6 +4,7 @@ const mongoose=require("mongoose");
 const Habit=require("../models/habit.js");
 const CheckIn=require("../models/chekIn.js");
 const requireAuth=require("../middleware/auth.js");
+const {requestTimeZone,dateKeyInZone,shiftDateKey,earliestInstantForKey}=require("../utils/timezone.js");
 
 router.use(requireAuth);
 
@@ -158,15 +159,15 @@ router.get("/:id/identity-stats",async(req,res)=>{
             return res.status(404).json({message:"Habit not found"});
         }
 
-        const since=new Date();
-        since.setHours(0,0,0,0);
-        since.setDate(since.getDate()-29);
+        const timeZone=requestTimeZone(req);
+        const sinceKey=shiftDateKey(dateKeyInZone(new Date(),timeZone),-29);
 
-        const provenCount=await CheckIn.countDocuments({
+        const recentCheckIns=await CheckIn.find({
             habit:req.params.id,
             done:true,
-            date:{$gte:since}
-        });
+            date:{$gte:earliestInstantForKey(sinceKey)}
+        }).select("date");
+        const provenCount=recentCheckIns.filter((checkIn)=>dateKeyInZone(checkIn.date,timeZone)>=sinceKey).length;
 
         res.json({
             identity:habit.identity || "",

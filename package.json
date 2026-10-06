@@ -1,0 +1,13 @@
+{
+  "name": "atomic-habit-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Atomic - a MEAN-stack habit streak tracker. The Express server serves the built Angular client.",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "npm --prefix client ci --include=dev && npm --prefix client run build && npm --prefix server ci --omit=dev",
+    "start": "node server/server.js"
+  }
+}

@@ -52,6 +52,8 @@ const habitSchema=new mongoose.Schema({
         type:Date,
         default:Date.now
     },
-   
+
 });
+// Every habit route looks habits up by owner.
+habitSchema.index({owner:1,createdAt:1});
 module.exports=mongoose.model("Habit",habitSchema);

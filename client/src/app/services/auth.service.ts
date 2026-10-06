@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { apiBaseUrl } from '../config/api';
 
 const TOKEN_KEY = 'habitTrackerToken';
 const EMAIL_KEY = 'habitTrackerEmail';
@@ -14,7 +15,7 @@ interface AuthResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiBaseUrl = window.location.port === '4200' ? 'http://localhost:3000/api' : '/api';
+  private apiBaseUrl = apiBaseUrl();
   private url = `${this.apiBaseUrl}/auth`;
 
   readonly email = signal<string | null>(this.safeGet(EMAIL_KEY));

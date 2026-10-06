@@ -72,17 +72,21 @@ router.post("/import", async (req, res) => {
             }
         }
 
-        let importedCheckins = 0;
+        const checkinDocs = [];
         for (const source of checkins) {
             const mappedHabitId = idMap.get(String(source?.habit));
             const parsedDate = source?.date ? new Date(source.date) : null;
             if (!mappedHabitId || !parsedDate || Number.isNaN(parsedDate.getTime())) continue;
 
-            await CheckIn.create({ habit: mappedHabitId, date: parsedDate, done: source?.done !== false });
-            importedCheckins++;
+            checkinDocs.push({ habit: mappedHabitId, date: parsedDate, done: source?.done !== false });
         }
 
-        res.status(201).json({ importedHabits: createdWithStack.length, importedCheckins });
+        // One bulk insert instead of thousands of round trips, which can exceed a host's request timeout.
+        if (checkinDocs.length) {
+            await CheckIn.insertMany(checkinDocs);
+        }
+
+        res.status(201).json({ importedHabits: createdWithStack.length, importedCheckins: checkinDocs.length });
     } catch (error) {
         console.error("Failed to import data", error);
         res.status(400).json({ message: "Invalid import data" });

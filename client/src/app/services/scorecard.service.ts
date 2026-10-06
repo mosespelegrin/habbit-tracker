@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { apiBaseUrl } from '../config/api';
 
 export type ScorecardRating = 'positive' | 'negative' | 'neutral';
 
@@ -14,7 +15,7 @@ export interface ScorecardEntry {
   providedIn: 'root'
 })
 export class ScorecardService {
-  private apiBaseUrl = window.location.port === '4200' ? 'http://localhost:3000/api' : '/api';
+  private apiBaseUrl = apiBaseUrl();
   private url = `${this.apiBaseUrl}/scorecard`;
 
   constructor(private httpClient: HttpClient) { }

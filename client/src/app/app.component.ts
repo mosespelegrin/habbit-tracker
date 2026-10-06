@@ -32,9 +32,8 @@ export class AppComponent {
       // localStorage unavailable (private mode, disabled cookies, etc.) - fall back below
     }
 
-    this.darkMode = saved
-      ? saved === 'dark'
-      : !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    // The violet "system" look is dark-first, so dark is the default until the user picks otherwise.
+    this.darkMode = saved ? saved === 'dark' : true;
     this.applyTheme();
   }
 

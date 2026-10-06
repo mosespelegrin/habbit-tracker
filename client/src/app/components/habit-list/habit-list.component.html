@@ -11,20 +11,49 @@
     [@toastAnimation]
   >{{ toast }}</div>
 
-  <section class="dashboard" *ngIf="habitCount">
-    <div class="stat-card">
-      <span class="stat-value">{{ doneTodayCount }}/{{ habitCount }}</span>
-      <span class="stat-label">Done today</span>
+  <section class="dashboard" *ngIf="habitCount" aria-label="Your progress">
+    <div class="level-card">
+      <span class="card-eyebrow">{{ rank }}-Rank</span>
+      <div class="level-row">
+        <span class="level-number">Lv. {{ level }}</span>
+        <span class="level-xp">{{ totalXp }} XP</span>
+      </div>
+      <div
+        class="xp-bar"
+        role="progressbar"
+        aria-label="Experience toward the next level"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="xpIntoLevel"
+      >
+        <span class="xp-fill" [style.width.%]="xpIntoLevel"></span>
+      </div>
+      <span class="xp-hint">{{ xpToNextLevel }} XP to level {{ level + 1 }} · 10 XP per check-in, last 90 days</span>
     </div>
-    <div class="stat-card">
-      <span class="stat-value">{{ completionRate }}%</span>
-      <span class="stat-label">Today's completion</span>
+
+    <div class="ring-card">
+      <svg class="ring" viewBox="0 0 120 120" role="img" [attr.aria-label]="completionRate + '% of habits done today, ' + doneTodayCount + ' of ' + habitCount">
+        <circle class="ring-track" cx="60" cy="60" r="50"></circle>
+        <circle
+          class="ring-value"
+          cx="60"
+          cy="60"
+          r="50"
+          transform="rotate(-90 60 60)"
+          [attr.stroke-dasharray]="ringCircumference"
+          [attr.stroke-dashoffset]="ringOffset"
+        ></circle>
+        <text class="ring-percent" x="60" y="62" text-anchor="middle">{{ completionRate }}%</text>
+        <text class="ring-caption" x="60" y="80" text-anchor="middle">{{ doneTodayCount }}/{{ habitCount }} done</text>
+      </svg>
+      <span class="card-eyebrow">Goal completion</span>
     </div>
-    <div class="stat-card">
+
+    <div class="stat-card stat-streak">
       <span class="stat-value">{{ longestActiveStreak }}</span>
       <span class="stat-label">Longest active streak</span>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-record">
       <span class="stat-value">{{ bestStreakEver }}</span>
       <span class="stat-label">Personal record</span>
     </div>
@@ -213,17 +242,20 @@
           (click)="checkIn(habit._id)"
           [disabled]="streaks[habit._id]?.doneToday || checkingInIds.has(habit._id)"
         >
-          {{ streaks[habit._id]?.doneToday ? 'Done today' : (checkingInIds.has(habit._id) ? 'Saving...' : 'Mark Done Today') }}
+          {{ streaks[habit._id]?.doneToday ? '✓ Done today' : (checkingInIds.has(habit._id) ? 'Saving...' : 'Mark Done Today') }}
         </button>
         <button type="button" class="edit-btn" (click)="startEdit(habit)">Edit</button>
         <button
           type="button"
           class="delete-btn"
+          [class.confirming]="pendingDeleteId === habit._id"
           (click)="deleteHabit(habit._id)"
           [disabled]="deletingIds.has(habit._id)"
-          [attr.aria-label]="'Delete ' + habit.name"
+          [attr.aria-label]="(pendingDeleteId === habit._id ? 'Confirm delete of ' : 'Delete ') + habit.name"
+          [attr.aria-pressed]="pendingDeleteId === habit._id ? 'true' : null"
         >
-          {{ deletingIds.has(habit._id) ? 'Deleting...' : 'Delete' }}
+          <ng-container *ngIf="deletingIds.has(habit._id); else deleteLabel">Deleting...</ng-container>
+          <ng-template #deleteLabel>{{ pendingDeleteId === habit._id ? 'Tap to confirm' : 'Delete' }}</ng-template>
         </button>
       </div>
     </ng-template>

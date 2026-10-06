@@ -22,16 +22,16 @@
 button.danger {
   min-height: 44px;
   padding: 10px 16px;
-  background: var(--danger);
+  background: var(--danger-solid);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
 }
 
 button.danger:hover {
-  background: var(--danger-dark);
+  background: var(--danger-solid-hover);
 }
 
 .push-enabled-row {
@@ -44,7 +44,7 @@ button.danger:hover {
 .push-enabled-row button {
   min-height: 44px;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: var(--card-bg);
   color: var(--text);
@@ -61,7 +61,7 @@ button.danger:hover {
 .backup-actions button {
   min-height: 44px;
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: var(--card-bg);
   color: var(--text);
@@ -75,7 +75,7 @@ button.danger:hover {
   display: inline-flex;
   align-items: center;
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: var(--card-bg);
   color: var(--text);
@@ -89,4 +89,117 @@ button.danger:hover {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.server-field {
+  margin-bottom: 12px;
+}
+
+.permission-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--card-bg-subtle);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.permission-status.is-granted {
+  background: rgba(15, 122, 79, 0.16);
+  border-color: rgba(92, 214, 162, 0.5);
+  color: var(--success-text);
+}
+
+.permission-status.is-blocked {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+
+.rationale {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--card-bg-subtle);
+  border: 1px solid rgba(95, 211, 227, 0.35);
+}
+
+.rationale p {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.rationale-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rationale-actions button {
+  min-height: 44px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rationale-actions button.primary {
+  border: none;
+}
+
+.hint {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.privacy-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.privacy-list strong {
+  color: var(--text);
+}
+
+.about-line {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.server-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.server-actions button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.server-actions button.primary {
+  border: none;
 }

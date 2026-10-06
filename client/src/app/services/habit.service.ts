@@ -1,18 +1,24 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { tap } from 'rxjs';
+import { apiBaseUrl } from '../config/api';
+import { ReminderService } from './reminder.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HabitService {
-  private apiBaseUrl = window.location.port === '4200' ? 'http://localhost:3000/api' : '/api';
+  private apiBaseUrl = apiBaseUrl();
   private url = `${this.apiBaseUrl}/habits`;
   private checkInUrl = `${this.apiBaseUrl}/checkins`;
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient, private reminderService: ReminderService) { }
 
   getHabits() {
-    return this.httpClient.get(this.url);
+    // Every mutation in the UI ends with a reload, so this is also the sync point for reminder notifications.
+    return this.httpClient.get<any[]>(this.url).pipe(
+      tap((habits) => void this.reminderService.sync(habits || []))
+    );
   }
   addHabit(habit: any) {
     return this.httpClient.post(this.url, habit);

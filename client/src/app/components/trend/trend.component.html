@@ -10,13 +10,29 @@
 
     <svg
       class="trend-chart"
-      [attr.viewBox]="'0 0 ' + chartWidth + ' ' + (chartHeight + 30)"
-      [attr.width]="chartWidth"
+      [attr.viewBox]="'0 0 ' + (chartWidth + axisWidth) + ' ' + (chartHeight + 30)"
+      [attr.width]="chartWidth + axisWidth"
       [attr.height]="chartHeight + 30"
       role="img"
       [attr.aria-label]="summary"
     >
-      <g *ngFor="let week of weeks; let i = index">
+      <g *ngFor="let tick of axisTicks">
+        <line
+          class="trend-grid"
+          [attr.x1]="axisWidth"
+          [attr.x2]="chartWidth + axisWidth"
+          [attr.y1]="chartHeight - tickY(tick)"
+          [attr.y2]="chartHeight - tickY(tick)"
+        ></line>
+        <text
+          class="trend-axis"
+          [attr.x]="axisWidth - 6"
+          [attr.y]="chartHeight - tickY(tick) + 4"
+          text-anchor="end"
+        >{{ tick }}%</text>
+      </g>
+
+      <g *ngFor="let week of weeks; let i = index" [attr.transform]="'translate(' + axisWidth + ',0)'">
         <title>{{ week.weekStart }}: {{ week.completionRate }}% complete</title>
         <rect
           class="trend-bar"
@@ -24,12 +40,12 @@
           [attr.y]="chartHeight - barHeight(week.completionRate)"
           [attr.width]="barWidth"
           [attr.height]="barHeight(week.completionRate)"
-          rx="3"
+          rx="4"
         ></rect>
         <text
           class="trend-label"
           [attr.x]="i * (barWidth + barGap) + barWidth / 2"
-          [attr.y]="chartHeight + 16"
+          [attr.y]="chartHeight + 18"
           text-anchor="middle"
         >{{ shortLabel(week.weekStart) }}</text>
       </g>

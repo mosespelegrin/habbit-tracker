@@ -4,6 +4,14 @@ const mongoose=require("mongoose");
 const Habit=require("../models/habit.js");
 const CheckIn = require("../models/chekIn.js");
 const requireAuth=require("../middleware/auth.js");
+const {
+    DAY_MS,
+    requestTimeZone,
+    dateKeyInZone,
+    shiftDateKey,
+    daysBetweenKeys,
+    earliestInstantForKey
+} = require("../utils/timezone.js");
 
 router.use(requireAuth);
 
@@ -12,53 +20,34 @@ const sendServerError=(res)=>{
     res.status(500).json({message:"Internal server error"});
 };
 
-const toDateKey = (date) => {
-    const normalized = new Date(date);
-    normalized.setHours(0, 0, 0, 0);
-    const year = normalized.getFullYear();
-    const month = String(normalized.getMonth() + 1).padStart(2, "0");
-    const day = String(normalized.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-};
-
 router.get("/trend", async (req, res) => {
     try {
         const requestedWeeks = parseInt(req.query.weeks, 10) || 12;
         const weeks = Math.min(Math.max(requestedWeeks, 1), 52);
+        const timeZone = requestTimeZone(req);
 
         const habits = await Habit.find({ owner: req.userId }).select("_id");
         const habitIds = habits.map((habit) => habit._id);
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const start = new Date(today);
-        start.setDate(start.getDate() - (weeks * 7 - 1));
-        const end = new Date(today);
-        end.setHours(23, 59, 59, 999);
+        const todayKey = dateKeyInZone(new Date(), timeZone);
+        const startKey = shiftDateKey(todayKey, -(weeks * 7 - 1));
 
         const checkins = habitIds.length
-            ? await CheckIn.find({ habit: { $in: habitIds }, done: true, date: { $gte: start, $lte: end } }).select("date")
+            ? await CheckIn.find({ habit: { $in: habitIds }, done: true, date: { $gte: earliestInstantForKey(startKey) } }).select("date")
             : [];
 
         const doneCountByWeek = new Array(weeks).fill(0);
         checkins.forEach((checkin) => {
-            const day = new Date(checkin.date);
-            day.setHours(0, 0, 0, 0);
-            const dayIndex = Math.round((day.getTime() - start.getTime()) / 86400000);
+            const dayIndex = daysBetweenKeys(startKey, dateKeyInZone(checkin.date, timeZone));
             const weekIndex = Math.floor(dayIndex / 7);
             if (weekIndex >= 0 && weekIndex < weeks) doneCountByWeek[weekIndex]++;
         });
 
         const possiblePerWeek = habitIds.length * 7;
-        const trend = doneCountByWeek.map((doneCount, index) => {
-            const weekStart = new Date(start);
-            weekStart.setDate(start.getDate() + index * 7);
-            return {
-                weekStart: toDateKey(weekStart),
-                completionRate: possiblePerWeek ? Math.round((doneCount / possiblePerWeek) * 100) : 0
-            };
-        });
+        const trend = doneCountByWeek.map((doneCount, index) => ({
+            weekStart: shiftDateKey(startKey, index * 7),
+            completionRate: possiblePerWeek ? Math.round((doneCount / possiblePerWeek) * 100) : 0
+        }));
 
         res.json(trend);
     } catch (error) {
@@ -80,29 +69,22 @@ router.get("/history/:habitId", async (req, res) => {
 
         const requestedDays = parseInt(req.query.days, 10) || 90;
         const days = Math.min(Math.max(requestedDays, 1), 365);
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
+        const timeZone = requestTimeZone(req);
 
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        start.setDate(start.getDate() - (days - 1));
+        const todayKey = dateKeyInZone(new Date(), timeZone);
+        const startKey = shiftDateKey(todayKey, -(days - 1));
 
         const checkins = await CheckIn.find({
             habit: req.params.habitId,
             done: true,
-            date: {
-                $gte: start,
-                $lte: end
-            }
-        });
+            date: { $gte: earliestInstantForKey(startKey) }
+        }).select("date");
 
-        const checkinDays = new Set(checkins.map((checkin) => toDateKey(checkin.date)));
+        const checkinDays = new Set(checkins.map((checkin) => dateKeyInZone(checkin.date, timeZone)));
         const history = [];
 
         for (let index = 0; index < days; index++) {
-            const date = new Date(start);
-            date.setDate(start.getDate() + index);
-            const dateKey = toDateKey(date);
+            const dateKey = shiftDateKey(startKey, index);
 
             history.push({
                 date: dateKey,
@@ -128,26 +110,23 @@ router.post("/:habitId/",async(req,res)=>{
             return res.status(404).json({message:"Habit not found"});
         }
 
-        const startOfTheDay=new Date();
-        startOfTheDay.setHours(0,0,0,0);
-        const endOfTheDay=new Date();
-        endOfTheDay.setHours(23,59,59,999);
+        const timeZone = requestTimeZone(req);
+        const now = new Date();
+        const todayKey = dateKeyInZone(now, timeZone);
 
-        const checkIn=await CheckIn.findOne({
+        // "Today" in the user's zone spans at most ~2 UTC days, so look back that far and match by date key.
+        const recentCheckIns=await CheckIn.find({
             habit:req.params.habitId,
-            date:{
-                $gte: startOfTheDay,
-                $lte: endOfTheDay
-            }
-        });
+            date:{ $gte: new Date(now.getTime() - 2 * DAY_MS) }
+        }).select("date");
 
-        if (checkIn) {
+        if (recentCheckIns.some((checkIn) => dateKeyInZone(checkIn.date, timeZone) === todayKey)) {
             return res.status(400).json({ message: "Check-in already exists for this habit today" });
         }
 
         const newCheckIn = new CheckIn({
                 habit: req.params.habitId,
-                date: new Date(),
+                date: now,
                 done: true
             });
         const savedCheckIn = await newCheckIn.save();
@@ -170,51 +149,38 @@ router.get("/streaks/:habitId", async (req, res) => {
             return res.status(404).json({message:"Habit not found"});
         }
 
+        const timeZone = requestTimeZone(req);
         const checkins = await CheckIn.find({
             habit: req.params.habitId,
             done: true
-        }).sort({ date: -1 });
+        }).select("date");
 
-        // Fast lookup set: "was this habit done on this calendar day?"
-        const checkinDays = new Set(checkins.map(c => toDateKey(c.date)));
+        // Fast lookup set: "was this habit done on this calendar day (in the user's timezone)?"
+        const checkinDays = new Set(checkins.map((c) => dateKeyInZone(c.date, timeZone)));
 
-        let streak = 0;
-        let cursor = new Date();
-        cursor.setHours(0, 0, 0, 0);
-        const todayKey = toDateKey(cursor);
-
-        const yesterday = new Date(cursor);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayKey = toDateKey(yesterday);
+        const todayKey = dateKeyInZone(new Date(), timeZone);
+        const yesterdayKey = shiftDateKey(todayKey, -1);
 
         // If today isn't checked off yet, start counting from yesterday
-        if (!checkinDays.has(todayKey)) {
-            cursor.setDate(cursor.getDate() - 1);
-        }
+        let cursorKey = checkinDays.has(todayKey) ? todayKey : yesterdayKey;
+        let streak = 0;
 
         // Walk backward one day at a time, stop at first gap
-        while (checkinDays.has(toDateKey(cursor))) {
+        while (checkinDays.has(cursorKey)) {
             streak++;
-            cursor.setDate(cursor.getDate() - 1);
+            cursorKey = shiftDateKey(cursorKey, -1);
         }
 
         // Best streak ever: sort the distinct done-days and find the longest run of consecutive days
         const sortedDayKeys = Array.from(checkinDays).sort();
         let bestStreak = 0;
         let runLength = 0;
-        let previousDay = null;
+        let previousKey = null;
 
         sortedDayKeys.forEach((dayKey) => {
-            const current = new Date(`${dayKey}T00:00:00`);
-            if (previousDay) {
-                const expectedPrevious = new Date(current);
-                expectedPrevious.setDate(expectedPrevious.getDate() - 1);
-                runLength = toDateKey(expectedPrevious) === toDateKey(previousDay) ? runLength + 1 : 1;
-            } else {
-                runLength = 1;
-            }
+            runLength = previousKey && shiftDateKey(dayKey, -1) === previousKey ? runLength + 1 : 1;
             bestStreak = Math.max(bestStreak, runLength);
-            previousDay = current;
+            previousKey = dayKey;
         });
 
         res.json({

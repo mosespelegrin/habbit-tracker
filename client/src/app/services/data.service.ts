@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { apiBaseUrl } from '../config/api';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  private apiBaseUrl = window.location.port === '4200' ? 'http://localhost:3000/api' : '/api';
+  private apiBaseUrl = apiBaseUrl();
   private url = `${this.apiBaseUrl}/data`;
 
   constructor(private httpClient: HttpClient) { }

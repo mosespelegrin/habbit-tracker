@@ -1,78 +1,93 @@
 /* You can add global styles to this file, and also import other style files */
 
+/*
+ * Theme: "glass over the morning haze" - the app surface floats as frosted glass panels above a
+ * deep slate-teal sky with a warm sunrise glow (dark), or above pale blue-grey mist (light).
+ * The design language follows the glassmorphism reference in /Downloads: translucent cards with
+ * backdrop blur and a hairline light edge, teal pill buttons, soft shadows, no neon outlines.
+ *
+ * Color tokens. Pairs used for text meet WCAG AA (4.5:1) in both themes:
+ *  - *-solid  : filled surfaces that carry white text (buttons, badges, toast)
+ *  - *-text   : colored text/icons sitting on card or page backgrounds
+ *  - --primary: decorative fills only (chart bars, ring, heatmap), never body text
+ */
 :root,
-:root[data-theme="light"] {
-  --bg: #f1f5f9;
-  --bg-gradient: linear-gradient(180deg, #eef2ff 0%, #f1f5f9 320px);
-  --card-bg: #ffffff;
-  --card-bg-subtle: #f8fafc;
-  --text: #1e293b;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --success: #22c55e;
-  --success-dark: #16a34a;
-  --danger: #ef4444;
-  --danger-dark: #dc2626;
-  --danger-bg: #fee2e2;
-  --danger-border: #fecaca;
-  --danger-text: #991b1b;
-  --orange: #f97316;
-  --heatmap-empty: #e2e8f0;
-  --shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
-}
-
 :root[data-theme="dark"] {
-  --bg: #0f172a;
-  --bg-gradient: linear-gradient(180deg, #1e1b4b 0%, #0f172a 320px);
-  --card-bg: #1e293b;
-  --card-bg-subtle: #16213a;
-  --text: #e2e8f0;
-  --text-muted: #94a3b8;
-  --text-faint: #64748b;
-  --border: #334155;
-  --border-strong: #475569;
-  --primary: #818cf8;
-  --primary-dark: #6366f1;
-  --success: #4ade80;
-  --success-dark: #22c55e;
-  --danger: #f87171;
-  --danger-dark: #ef4444;
-  --danger-bg: #451a1a;
-  --danger-border: #7f1d1d;
-  --danger-text: #fca5a5;
-  --orange: #fb923c;
-  --heatmap-empty: #334155;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+  --bg: #0a141b;
+  --bg-gradient:
+    radial-gradient(1100px 520px at 78% -120px, rgba(255, 176, 94, 0.2), transparent 62%),
+    radial-gradient(820px 460px at 6% 10%, rgba(72, 178, 196, 0.18), transparent 60%),
+    linear-gradient(180deg, #0f2129 0%, #0a141b 560px);
+  --card-bg: rgba(255, 255, 255, 0.06);
+  --card-bg-subtle: rgba(255, 255, 255, 0.045);
+  --text: #eaf4f7;
+  --text-muted: #a9c1c9;
+  --text-faint: #82999f;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --primary: #5fd3e3;
+  --primary-solid: #0e7486;
+  --primary-solid-hover: #0a5c6b;
+  --primary-text: #7ee3f2;
+  --accent: #f2a65a;
+  --success-solid: #0f7a4f;
+  --success-solid-hover: #0c6240;
+  --success-text: #5cd6a2;
+  --danger-solid: #c23838;
+  --danger-solid-hover: #a52d2d;
+  --danger-bg: rgba(194, 56, 56, 0.16);
+  --danger-border: rgba(194, 56, 56, 0.55);
+  --danger-text: #ff9d9d;
+  --streak: #ffc46b;
+  --heatmap-empty: rgba(255, 255, 255, 0.1);
+  --heatmap-done: #45c8db;
+  --shadow: 0 16px 40px rgba(2, 10, 14, 0.5);
+  --glow: 0 6px 20px rgba(14, 116, 134, 0.45);
+  --glow-strong: 0 8px 26px rgba(14, 116, 134, 0.6);
+  --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary);
+  --radius: 20px;
+  --radius-lg: 28px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f172a;
-    --bg-gradient: linear-gradient(180deg, #1e1b4b 0%, #0f172a 320px);
-    --card-bg: #1e293b;
-    --card-bg-subtle: #16213a;
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --text-faint: #64748b;
-    --border: #334155;
-    --border-strong: #475569;
-    --primary: #818cf8;
-    --primary-dark: #6366f1;
-    --success: #4ade80;
-    --success-dark: #22c55e;
-    --danger: #f87171;
-    --danger-dark: #ef4444;
-    --danger-bg: #451a1a;
-    --danger-border: #7f1d1d;
-    --danger-text: #fca5a5;
-    --orange: #fb923c;
-    --heatmap-empty: #334155;
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #e6eef1;
+  --bg-gradient:
+    radial-gradient(1000px 480px at 78% -100px, rgba(255, 186, 110, 0.34), transparent 65%),
+    radial-gradient(760px 420px at 6% 8%, rgba(96, 196, 214, 0.28), transparent 60%),
+    linear-gradient(180deg, #f2f7f9 0%, #e6eef1 520px);
+  --card-bg: rgba(255, 255, 255, 0.66);
+  --card-bg-subtle: rgba(255, 255, 255, 0.45);
+  --text: #0e2229;
+  --text-muted: #3f5a64;
+  --text-faint: #5c757f;
+  --border: rgba(14, 34, 41, 0.1);
+  --border-strong: rgba(14, 34, 41, 0.22);
+  --primary: #0e7486;
+  --primary-solid: #0e7486;
+  --primary-solid-hover: #0a5c6b;
+  --primary-text: #0b5f6e;
+  --accent: #d97728;
+  --success-solid: #0f7a4f;
+  --success-solid-hover: #0c6240;
+  --success-text: #0c6240;
+  --danger-solid: #c23838;
+  --danger-solid-hover: #a52d2d;
+  --danger-bg: rgba(194, 56, 56, 0.12);
+  --danger-border: rgba(194, 56, 56, 0.45);
+  --danger-text: #972626;
+  --streak: #b45309;
+  --heatmap-empty: rgba(14, 34, 41, 0.1);
+  --heatmap-done: #1899ad;
+  --shadow: 0 10px 30px rgba(24, 54, 64, 0.16);
+  --glow: 0 6px 18px rgba(14, 116, 134, 0.28);
+  --glow-strong: 0 8px 24px rgba(14, 116, 134, 0.38);
+  --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --focus-ring: 0 0 0 2px #f2f7f9, 0 0 0 4px var(--primary);
+  --radius: 20px;
+  --radius-lg: 28px;
 }
 
 * {
@@ -81,15 +96,49 @@
 
 html,
 body {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   margin: 0;
   background: var(--bg-gradient), var(--bg);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: var(--bg);
   color: var(--text);
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/*
+ * Glassmorphism: every card-like surface is frosted glass floating above the sky gradient.
+ * Kept here as one global rule so new components get the effect for free; the fixed mobile tab
+ * bar and the top bar carry their own backdrop rules (see app.component.css - a backdrop-filter
+ * on an ancestor of a fixed element would re-anchor it to that ancestor).
+ */
+.panel,
+.habit-tracker,
+.auth-card,
+.level-card,
+.ring-card,
+.stat-card,
+.habit-item,
+.four-laws,
+.push-enabled-row,
+.server-actions {
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+button,
+a,
+summary,
+label.import-label {
+  touch-action: manipulation;
+}
+
+::selection {
+  background: rgba(95, 211, 227, 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {

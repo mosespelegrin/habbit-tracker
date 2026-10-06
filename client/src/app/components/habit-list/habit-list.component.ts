@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HabitService } from '../../services/habit.service';
@@ -93,7 +93,7 @@ const HABIT_TEMPLATES: HabitTemplate[] = [
     ])
   ]
 })
-export class HabitListComponent implements OnInit {
+export class HabitListComponent implements OnInit, OnDestroy {
 
   readonly fourLaws = [
     { law: 'Make it Obvious', field: 'Cue', hint: 'Attach the habit to a clear trigger in your day.' },
@@ -126,6 +126,14 @@ export class HabitListComponent implements OnInit {
   toast: string | null = null;
   toastType: 'success' | 'error' = 'success';
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * Destructive-action guard: the first tap on Delete arms this id and the button asks for
+   * confirmation; only a second tap deletes. Android WebView does not render window.confirm()
+   * dialogs, so the confirmation is drawn by the UI instead of relying on native dialogs.
+   */
+  pendingDeleteId: string | null = null;
+  private pendingDeleteTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private habitService: HabitService) { }
 
@@ -279,22 +287,48 @@ export class HabitListComponent implements OnInit {
 
   deleteHabit(habitId: string) {
     if (this.deletingIds.has(habitId)) return;
-    const habit = this.habits.find((h) => h._id === habitId);
-    const confirmed = window.confirm(`Delete "${habit?.name || 'this habit'}"? This can't be undone.`);
-    if (!confirmed) return;
 
+    // First tap arms the confirmation; the button turns into "Tap to confirm".
+    if (this.pendingDeleteId !== habitId) {
+      this.armDeleteConfirmation(habitId);
+      return;
+    }
+
+    this.clearDeleteConfirmation();
+    const habit = this.habits.find((h) => h._id === habitId);
     this.deletingIds.add(habitId);
     this.habitService.deleteHabit(habitId).subscribe({
       next: () => {
         this.deletingIds.delete(habitId);
         if (this.editingHabitId === habitId) this.cancelEdit();
         this.loadHabits();
+        this.showToast(`Deleted "${habit?.name || 'habit'}"`, 'success');
       },
       error: (err) => {
         this.deletingIds.delete(habitId);
         this.showToast(err.error?.message || 'Could not delete habit', 'error');
       }
     });
+  }
+
+  /** Arms (or re-arms) the delete confirmation, auto-reverting after 5 seconds. */
+  armDeleteConfirmation(habitId: string) {
+    this.pendingDeleteId = habitId;
+    if (this.pendingDeleteTimer) clearTimeout(this.pendingDeleteTimer);
+    this.pendingDeleteTimer = setTimeout(() => this.clearDeleteConfirmation(), 5000);
+  }
+
+  clearDeleteConfirmation() {
+    this.pendingDeleteId = null;
+    if (this.pendingDeleteTimer) {
+      clearTimeout(this.pendingDeleteTimer);
+      this.pendingDeleteTimer = undefined;
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    if (this.pendingDeleteTimer) clearTimeout(this.pendingDeleteTimer);
   }
 
   loadStacks() {
@@ -338,11 +372,49 @@ export class HabitListComponent implements OnInit {
     return Math.round((this.doneTodayCount / this.habitCount) * 100);
   }
 
+  // These read through `this.habits` (not Object.values(this.streaks)) so a deleted habit's cached
+  // streak can't keep inflating the dashboard after it is gone.
   get longestActiveStreak() {
-    return Object.values(this.streaks).reduce((max, s) => Math.max(max, s?.streak || 0), 0);
+    return this.habits.reduce((max, habit) => Math.max(max, this.streaks[habit._id]?.streak || 0), 0);
   }
 
   get bestStreakEver() {
-    return Object.values(this.streaks).reduce((max, s) => Math.max(max, s?.bestStreak || 0), 0);
+    return this.habits.reduce((max, habit) => Math.max(max, this.streaks[habit._id]?.bestStreak || 0), 0);
+  }
+
+  // --- Level / XP: 10 XP per check-in in each habit's loaded 90-day history, 100 XP per level. ---
+  readonly xpPerCheckIn = 10;
+  readonly xpPerLevel = 100;
+  private readonly ranks = ['E', 'D', 'C', 'B', 'A', 'S'];
+
+  get totalXp() {
+    const checkIns = this.habits.reduce(
+      (sum, habit) => sum + (this.histories[habit._id] || []).filter((day) => day.done).length,
+      0
+    );
+    return checkIns * this.xpPerCheckIn;
+  }
+
+  get level() {
+    return Math.floor(this.totalXp / this.xpPerLevel) + 1;
+  }
+
+  get xpIntoLevel() {
+    return this.totalXp % this.xpPerLevel;
+  }
+
+  get xpToNextLevel() {
+    return this.xpPerLevel - this.xpIntoLevel;
+  }
+
+  get rank() {
+    return this.ranks[Math.min(this.level - 1, this.ranks.length - 1)];
+  }
+
+  // --- Completion ring (SVG circle, r = 50) ---
+  readonly ringCircumference = 2 * Math.PI * 50;
+
+  get ringOffset() {
+    return this.ringCircumference * (1 - this.completionRate / 100);
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { apiBaseUrl } from '../config/api';
 
 export interface WeeklyReview {
   weekStart: string;
@@ -12,7 +13,7 @@ export interface WeeklyReview {
   providedIn: 'root'
 })
 export class WeeklyReviewService {
-  private apiBaseUrl = window.location.port === '4200' ? 'http://localhost:3000/api' : '/api';
+  private apiBaseUrl = apiBaseUrl();
   private url = `${this.apiBaseUrl}/weekly-reviews`;
 
   constructor(private httpClient: HttpClient) { }

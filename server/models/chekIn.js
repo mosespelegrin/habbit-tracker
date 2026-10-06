@@ -15,4 +15,6 @@ const checkInSchema=new mongoose.Schema({
     }
 
 });
+// Every check-in query filters by habit and a date range, so index for that.
+checkInSchema.index({habit:1,date:-1});
 module.exports=mongoose.model("CheckIn",checkInSchema);

@@ -1,0 +1,21 @@
+# Render Blueprint: one web service that builds the Angular client and serves it from Express.
+# Create it with New > Blueprint and point it at this repo, then fill in the `sync: false` values.
+services:
+  - type: web
+    name: atomic-habit-tracker
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      # No VAPID keys needed: web push was removed with the PWA; reminder notifications
+      # are scheduled natively by the Android build.

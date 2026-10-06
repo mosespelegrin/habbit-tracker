@@ -1,62 +1,148 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { AuthService } from '../../services/auth.service';
-import { PushService } from '../../services/push.service';
+import { ReminderService } from '../../services/reminder.service';
+import { HabitService } from '../../services/habit.service';
 import { DataService } from '../../services/data.service';
+import { ServerConfigService } from '../../services/server-config.service';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './settings.component.html',
   styleUrls: ['../shared/panel.css', './settings.component.css']
 })
 export class SettingsComponent {
-  isEnablingPush = false;
-  pushError: string | null = null;
+  isTogglingReminders = false;
+  reminderError: string | null = null;
+  /** Step 1 of just-in-time consent: show the plain-language rationale before the OS dialog. */
+  reminderRationaleOpen = false;
 
   isExporting = false;
   isImporting = false;
   importMessage: string | null = null;
   dataError: string | null = null;
 
+  /** Native builds talk to an absolute API origin; the web build uses its own origin and hides this. */
+  readonly isNative = Capacitor.isNativePlatform();
+  serverUrl: string;
+  serverStatus: string | null = null;
+  serverError: string | null = null;
+  isTestingServer = false;
+
   constructor(
     public authService: AuthService,
-    public pushService: PushService,
+    public reminderService: ReminderService,
+    private habitService: HabitService,
     private dataService: DataService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private serverConfig: ServerConfigService
+  ) {
+    this.serverUrl = this.serverConfig.origin;
+  }
 
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
 
-  async enablePush() {
-    this.isEnablingPush = true;
-    this.pushError = null;
+  /** Validates the address and pings `/api/health` so a typo is caught before saving. */
+  testServer() {
+    this.serverStatus = null;
+    this.serverError = null;
+    this.isTestingServer = true;
+
+    this.serverConfig.test(this.serverUrl).then((result) => {
+      this.isTestingServer = false;
+      if (result.ok) {
+        this.serverStatus = result.message;
+        this.serverError = null;
+      } else {
+        this.serverStatus = null;
+        this.serverError = result.message;
+      }
+    });
+  }
+
+  /**
+   * Persists the override. Services build their base URL once at startup, so the app reloads
+   * to pick the new address up immediately instead of requiring a manual restart.
+   */
+  saveServer() {
+    this.serverError = null;
+
+    if (!this.serverConfig.save(this.serverUrl)) {
+      this.serverError = 'Enter a full address, e.g. http://192.168.1.100:3100';
+      return;
+    }
+
+    window.location.reload();
+  }
+
+  /**
+   * Just-in-time consent (MD A2): the first tap never triggers the system dialog - it opens the
+   * in-app rationale. Only "Continue" on the rationale calls the OS permission request.
+   */
+  async enableReminders() {
+    if (!this.reminderRationaleOpen) {
+      this.reminderRationaleOpen = true;
+      this.reminderError = null;
+      return;
+    }
+
+    this.reminderRationaleOpen = false;
+    this.isTogglingReminders = true;
+    this.reminderError = null;
 
     try {
-      await this.pushService.enable();
+      await this.reminderService.enable();
+      this.resyncReminders();
     } catch (err: any) {
-      this.pushError = err?.message || 'Could not enable push reminders';
+      this.reminderError = err?.message || 'Could not enable reminders';
     } finally {
-      this.isEnablingPush = false;
+      this.isTogglingReminders = false;
     }
   }
 
-  async disablePush() {
-    this.isEnablingPush = true;
-    this.pushError = null;
+  cancelRationale() {
+    this.reminderRationaleOpen = false;
+  }
+
+  /** Short, human wording for the permission status row. */
+  permissionLabel(): string {
+    switch (this.reminderService.permission()) {
+      case 'granted': return 'Allowed';
+      case 'denied': return 'Blocked';
+      case 'prompt': return 'Not asked yet';
+      default: return 'Not supported on this device';
+    }
+  }
+
+  /** Platform shown in the About section (web / android / ios). */
+  platformLabel(): string {
+    return Capacitor.getPlatform();
+  }
+
+  async disableReminders() {
+    this.isTogglingReminders = true;
+    this.reminderError = null;
 
     try {
-      await this.pushService.disable();
+      await this.reminderService.disable();
     } catch (err: any) {
-      this.pushError = err?.message || 'Could not disable push reminders';
+      this.reminderError = err?.message || 'Could not disable reminders';
     } finally {
-      this.isEnablingPush = false;
+      this.isTogglingReminders = false;
     }
+  }
+
+  /** Reloading the habits re-runs the reminder schedule (see HabitService.getHabits). */
+  private resyncReminders() {
+    this.habitService.getHabits().subscribe({ error: () => { /* schedule stays as-is */ } });
   }
 
   exportData() {

@@ -22,6 +22,9 @@ export class TrendComponent implements OnInit {
   readonly chartHeight = 140;
   readonly barWidth = 28;
   readonly barGap = 10;
+  // Left gutter for the y-axis labels, and the gridline values drawn behind the bars.
+  readonly axisWidth = 36;
+  readonly axisTicks = [0, 50, 100];
 
   constructor(private habitService: HabitService) { }
 
@@ -40,6 +43,11 @@ export class TrendComponent implements OnInit {
 
   barHeight(rate: number): number {
     return Math.max(2, Math.round((rate / 100) * this.chartHeight));
+  }
+
+  // Vertical offset (from the baseline) of a gridline; unlike barHeight it has no 2px minimum.
+  tickY(rate: number): number {
+    return Math.round((rate / 100) * this.chartHeight);
   }
 
   get chartWidth(): number {

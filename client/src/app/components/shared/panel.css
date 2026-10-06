@@ -1,16 +1,25 @@
 .panel {
-  max-width: 760px;
+  max-width: 1000px;
   margin: 0 auto 40px;
   padding: 24px;
   background: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow), var(--panel-edge);
+}
+
+:root[data-theme="light"] .panel {
+  border-color: rgba(255, 255, 255, 0.85);
 }
 
 .panel h2 {
-  margin: 0 0 6px;
+  margin: 0 0 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
   color: var(--text);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .panel-subtitle {
@@ -38,12 +47,18 @@
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 0.95rem;
-  background: var(--card-bg);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text);
   box-sizing: border-box;
   font-family: inherit;
+}
+
+:root[data-theme="light"] .field input,
+:root[data-theme="light"] .field select,
+:root[data-theme="light"] .field textarea {
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .field textarea {
@@ -54,26 +69,29 @@
 .field input:focus-visible,
 .field select:focus-visible,
 .field textarea:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
-  border-color: var(--primary);
+  outline: 2px solid transparent;
+  box-shadow: var(--focus-ring);
+  border-color: var(--primary-text);
 }
 
 .panel button[type="submit"],
 .panel button.primary {
   min-height: 44px;
-  padding: 10px 16px;
-  background: var(--primary);
+  padding: 10px 22px;
+  background: var(--primary-solid);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--glow);
+  transition: box-shadow 0.2s ease, background 0.2s ease, transform 0.1s ease;
 }
 
 .panel button[type="submit"]:hover:not(:disabled),
 .panel button.primary:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: var(--primary-solid-hover);
+  box-shadow: var(--glow-strong);
 }
 
 .panel button:disabled {
@@ -81,18 +99,19 @@
   cursor: not-allowed;
 }
 
-.panel button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+.panel button:focus-visible,
+.panel .import-label:focus-within {
+  outline: 2px solid transparent;
+  box-shadow: var(--focus-ring);
 }
 
 .panel .error {
-  color: var(--danger-dark);
+  color: var(--danger-text);
   font-size: 0.85rem;
 }
 
 .panel .success-message {
-  color: var(--success-dark);
+  color: var(--success-text);
   font-size: 0.85rem;
 }
 

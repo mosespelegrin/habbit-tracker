@@ -27,13 +27,10 @@ Alternative: run MongoDB yourself (a VPS with `mongod`, or your host's managed M
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-**VAPID keys** (optional — only needed if you want push notification reminders):
+> Web-push (VAPID) keys are **no longer needed** — the PWA and its push notifications were removed;
+> reminder notifications are scheduled natively on the Android build.
 
-```bash
-npx web-push generate-vapid-keys
-```
-
-Keep both private. Never commit them.
+Keep the secret private. Never commit it.
 
 ## 3. Environment variables
 
@@ -44,16 +41,14 @@ Set these on your host (not in a committed file):
 | `MONGO_URI` | Yes | From step 1 |
 | `JWT_SECRET` | Yes | From step 2 |
 | `NODE_ENV` | Yes | Set to `production` |
-| `PRT` | No | Port to listen on; most hosts inject `PORT` — see note below |
-| `CLIENT_ORIGINS` | Yes in production | Comma-separated list of allowed origins. If the server serves the client itself (recommended setup, see below), this should include your app's own public URL |
+| `PORT` | No | Port to listen on. Hosts (Render, Railway, Heroku, Fly) inject it automatically; `PRT` is still read as a fallback, default 3000 |
+| `CLIENT_ORIGINS` | No | Extra origins allowed to call the API (e.g. a separately hosted frontend). The app's own origin is always allowed, so you can leave this alone when the server serves the client itself (the recommended setup). Defaults also allow the native app's WebView origins (`capacitor://localhost`, `http://localhost`) — keep those if you override this |
+| `TRUST_PROXY` | No | Number of reverse-proxy hops in front of the server. Defaults to `1` in production. Needed so rate limiting sees each visitor's real IP instead of the host proxy's |
 | `RATE_LIMIT_MAX` | No | Requests per 15 min per IP, default 300 |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | No | Only for push reminders; `VAPID_SUBJECT` is `mailto:you@example.com` |
 
-**Port note:** `server/server.js` reads `process.env.PRT`, not the more common `PORT`. Most PaaS hosts (Render, Railway, Heroku) inject `PORT` and expect your app to bind to it. Either:
-- set `PRT` explicitly in your host's environment settings to whatever `PORT` value the platform assigns (check their docs — some let you reference `$PORT`), or
-- add one line to `server/server.js` yourself: `app.port = process.env.PRT || process.env.PORT || 3000;`
+The server refuses to start if `JWT_SECRET` or `MONGO_URI` is missing, so a misconfigured deploy fails loudly in the logs.
 
-If you're deploying to a plain VPS where you control the port, just set `PRT` directly and skip this.
+**Timezones:** the browser sends its timezone on every request (`X-Timezone`), and the server computes "today", streaks, history and trends in that zone. This matters because hosts run in UTC — without it a user's day would roll over at the wrong local time.
 
 ## 4. Build the client
 
@@ -82,23 +77,32 @@ npm start
 `npm start` runs `node server.js`. In production, confirm:
 - It logs `MongoDB connected successfully` (not `MongoDB connection failed`)
 - It logs `Server is running on port <N>`
-- If VAPID keys aren't set, it logs a warning and continues — push reminders are simply disabled, everything else works
 
 ## 6. Hosting options
 
 Pick whichever fits your budget/comfort:
 
+The repo root has a `package.json` so any Node host can use the same two commands: **build** `npm run build` (installs and builds the client, installs the server) and **start** `npm start`. Requires Node 20.19+ (declared in `engines`). Note the build script uses `npm ci --include=dev` for the client, because hosts set `NODE_ENV=production` during the build and would otherwise skip the Angular CLI.
+
+Every option below exposes a health check at `GET /api/health` (returns `200` once MongoDB is connected).
+
 **Render.com** (simple, free tier available)
-1. New → Web Service → connect this repo.
-2. Build command: `cd client && npm install && npm run build && cd ../server && npm install`
-3. Start command: `cd server && npm start`
-4. Add the environment variables from step 3 in the dashboard.
-5. Render sets `PORT` for you — apply the port note above.
+1. New → Blueprint → connect this repo. `render.yaml` already defines the service (build/start commands, health check, `NODE_ENV`, a generated `JWT_SECRET`).
+2. Fill in `MONGO_URI` when prompted.
+3. Render injects `PORT` for you — nothing else to configure.
+
+Or by hand: New → Web Service, build command `npm run build`, start command `npm start`, then add the variables from step 3.
 
 **Railway.app** (similar flow, usage-based free tier)
-1. New Project → deploy from repo.
-2. Set a build command and start command as above, or use two services (one for build, one for the server) if you prefer — simplest is one service running both steps.
-3. Add environment variables in the dashboard. Railway also injects `PORT`.
+1. New Project → deploy from repo. Build command `npm run build`, start command `npm start` (Railway also detects the root `package.json`).
+2. Add environment variables in the dashboard. Railway injects `PORT`.
+
+**Docker** (Fly.io, Cloud Run, any container host)
+```bash
+docker build -t atomic-habit-tracker .
+docker run -p 3000:3000 -e MONGO_URI=... -e JWT_SECRET=... atomic-habit-tracker
+```
+The image is multi-stage (builds the client, then ships only the server plus the built client), runs as a non-root user, and includes a health check.
 
 **A plain VPS (DigitalOcean, Linode, EC2, etc.)**
 1. Install Node.js and (optionally) MongoDB.
@@ -124,9 +128,11 @@ Once it's live, verify manually (there's no automated E2E suite yet):
 4. Refresh the page — you should stay logged in and see the same habit.
 5. Log out, log back in — should work.
 6. Open Settings → Export data — should download a JSON file with your habit and check-in.
-7. If you configured VAPID keys: Settings → Enable push reminders → accept the browser permission prompt → should succeed without an error toast.
+7. Open Settings → Privacy & data — the notice should list what is stored, where, and that there is no tracking.
 
-If step 2 or 3 fails with a network error, double check `CLIENT_ORIGINS` includes the exact origin the browser is loading the app from (scheme + host + port, no trailing slash).
+If step 2 or 3 fails with a network error and you host the client on a *different* origin than the API, make sure `CLIENT_ORIGINS` includes that exact origin (scheme + host + port). If the API sits behind a proxy that rewrites the `Host` header, the server can't recognise its own origin — add it to `CLIENT_ORIGINS` too.
+
+Also check `GET /api/health` first: `503` means the server is up but MongoDB isn't connected yet.
 
 ## Updating a deployed instance
 
@@ -136,3 +142,18 @@ cd client && npm install && npm run build
 cd ../server && npm install
 # restart the process (pm2 restart habit-tracker, or your host's redeploy button)
 ```
+
+## Mobile app against this deployment
+
+The Capacitor build calls this deployment directly, so after the first deploy:
+
+1. In the app: **Settings → Server → API address** — enter this service's URL (e.g.
+   `https://atomic-habit-tracker.onrender.com`), tap **Test connection** (expect "Server is healthy"),
+   then **Save & reload**. This stores the origin in the device's local storage, so no rebuild is needed;
+   it overrides the compiled-in default.
+2. `cd client && npm run build:app`, then build the APK from Android Studio (or `gradlew assembleDebug`).
+3. Confirm the CORS list: the server's default `CLIENT_ORIGINS` already includes `capacitor://localhost` and
+   `http://localhost`. If you set your own `CLIENT_ORIGINS`, both must be in it.
+4. Smoke-test the packaged app the same way as the web build: register, add a habit, check it off, reload.
+   Against Render the API is HTTPS, so it works even though Android blocks cleartext HTTP by default
+   (cleartext is only enabled for LAN testing).

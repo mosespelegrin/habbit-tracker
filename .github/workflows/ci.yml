@@ -1,0 +1,59 @@
+name: CI
+
+# Quality gate: the client bundle must build, unit tests must pass, and the server must parse.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  client:
+    name: Client build + unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Build (also enforces bundle-size budget)
+        run: npm run build
+
+      - name: Unit tests
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+  server:
+    name: Server syntax + install check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install production dependencies
+        run: npm ci --omit=dev
+
+      - name: Syntax check every source file
+        run: |
+          set -e
+          for f in *.js routes/*.js models/*.js middleware/*.js services/*.js; do
+            [ -f "$f" ] || continue
+            echo "node --check $f"
+            node --check "$f"
+          done

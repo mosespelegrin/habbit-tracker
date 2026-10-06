@@ -13,16 +13,28 @@
 .trend-chart {
   display: block;
   max-width: 100%;
+  height: auto;
   overflow: visible;
 }
 
 .trend-bar {
   fill: var(--primary);
+  filter: drop-shadow(0 0 6px rgba(95, 211, 227, 0.5));
+}
+
+.trend-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.trend-axis {
+  font-size: 11px;
+  fill: var(--text-faint);
 }
 
 .trend-label {
-  font-size: 8px;
-  fill: var(--text-faint);
+  font-size: 11px;
+  fill: var(--text-muted);
 }
 
 .trend-summary {

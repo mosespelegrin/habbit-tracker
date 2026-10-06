@@ -18,4 +18,44 @@
   </form>
 
   <p class="auth-switch">New here? <a routerLink="/register">Create an account</a></p>
+
+  <!-- Native only: lets a device reach Settings-level server config BEFORE authenticating. -->
+  <div class="server-panel" *ngIf="isNative">
+    <button
+      type="button"
+      class="server-toggle"
+      (click)="toggleServerPanel()"
+      [attr.aria-expanded]="showServerPanel"
+    >
+      {{ showServerPanel ? 'Hide server address' : "Can't connect? Change server address" }}
+    </button>
+
+    <div class="server-box" *ngIf="showServerPanel">
+      <p class="server-hint" *ngIf="serverHint">{{ serverHint }}</p>
+
+      <div class="field">
+        <label for="login-server-url">Server address</label>
+        <input
+          id="login-server-url"
+          type="url"
+          name="loginServerUrl"
+          [(ngModel)]="serverUrl"
+          placeholder="https://your-server.example.com"
+          autocomplete="off"
+          spellcheck="false"
+          (keydown.enter)="testServer()"
+        />
+      </div>
+
+      <div class="server-actions">
+        <button type="button" (click)="testServer()" [disabled]="isTestingServer">
+          {{ isTestingServer ? 'Testing...' : 'Test connection' }}
+        </button>
+        <button type="button" class="primary" (click)="saveServer()">Save &amp; reload</button>
+      </div>
+
+      <p class="server-status" *ngIf="serverStatus" role="status" aria-live="polite">{{ serverStatus }}</p>
+      <p class="server-error" *ngIf="serverError" role="alert">{{ serverError }}</p>
+    </div>
+  </div>
 </div>
