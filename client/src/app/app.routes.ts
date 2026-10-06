@@ -7,15 +7,17 @@ import { ScorecardComponent } from './components/scorecard/scorecard.component';
 import { WeeklyReviewComponent } from './components/weekly-review/weekly-review.component';
 import { TrendComponent } from './components/trend/trend.component';
 import { SettingsComponent } from './components/settings/settings.component';
+import { WorkflowComponent } from './components/workflow/workflow.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
+  { path: 'workflow', component: WorkflowComponent, canActivate: [authGuard] },
   { path: 'habits', component: HabitListComponent, canActivate: [authGuard] },
   { path: 'scorecard', component: ScorecardComponent, canActivate: [authGuard] },
   { path: 'weekly-review', component: WeeklyReviewComponent, canActivate: [authGuard] },
   { path: 'trends', component: TrendComponent, canActivate: [authGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [authGuard] },
-  { path: '', pathMatch: 'full', redirectTo: 'habits' },
+  { path: '', pathMatch: 'full', redirectTo: 'workflow' },
   { path: '**', redirectTo: 'habits' }
 ];

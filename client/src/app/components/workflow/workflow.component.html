@@ -1,0 +1,139 @@
+<div class="panel workflow">
+  <h2>Atomic Workflow</h2>
+  <p class="panel-subtitle">
+    The book as a loop: <strong>Awareness</strong> → <strong>Design</strong> → <strong>Do</strong> → <strong>Reflect</strong>.
+    Your <strong>+ − =</strong> scorecard list feeds directly into the next step — nothing sits idle.
+  </p>
+
+  <nav class="stepper" aria-label="Atomic Habits workflow">
+    <div class="step" [class.done]="scorecard.length > 0"><span class="step-num">1</span><span>Awareness<br><small>Scorecard + − =</small></span></div>
+    <span class="step-arrow" aria-hidden="true">→</span>
+    <div class="step" [class.done]="habits.length > 0"><span class="step-num">2</span><span>Design<br><small>4 Laws</small></span></div>
+    <span class="step-arrow" aria-hidden="true">→</span>
+    <div class="step" [class.done]="habits.length > 0"><span class="step-num">3</span><span>Do<br><small>Streak · Never miss twice</small></span></div>
+    <span class="step-arrow" aria-hidden="true">→</span>
+    <div class="step" [class.done]="pastReviews.length > 0"><span class="step-num">4</span><span>Reflect<br><small>Weekly tweak</small></span></div>
+  </nav>
+
+  <p class="loading-state" *ngIf="isLoading" role="status" aria-live="polite">Loading your loop...</p>
+  <p class="error" *ngIf="error" role="alert">{{ error }}</p>
+
+  <!-- STEP 1: AWARENESS -->
+  <section class="wf-step" id="step-awareness" *ngIf="!isLoading">
+    <div class="wf-step-header">
+      <span class="wf-badge">Step 1 · Make it Obvious</span>
+      <h3>Awareness — Habit Scorecard</h3>
+      <p class="wf-hint">"Until you make the unconscious conscious, it will direct your life and you will call it fate." — List every daily behavior as <strong class="tag positive">+</strong> good, <strong class="tag negative">−</strong> bad, <strong class="tag neutral">=</strong> neutral. This is ch.1's starting point.</p>
+    </div>
+
+    <div class="wf-stats">
+      <span class="wf-stat positive">+ {{ habitCountForRating('positive') }} good</span>
+      <span class="wf-stat negative">− {{ habitCountForRating('negative') }} bad</span>
+      <span class="wf-stat neutral">= {{ habitCountForRating('neutral') }} neutral</span>
+      <a routerLink="/scorecard" class="wf-link">Manage full list →</a>
+    </div>
+
+    <div class="score-preview" *ngIf="scorecard.length; else noScore">
+      <div class="score-column" *ngFor="let rating of ['positive','negative','neutral']">
+        <h4><span class="tag" [ngClass]="rating">{{ rating === 'positive' ? '+' : rating === 'negative' ? '−' : '=' }}</span> {{ rating }}</h4>
+        <ul>
+          <li *ngFor="let e of byRating(rating).slice(0,4)">
+            <span class="score-text">{{ e.text }}</span>
+            <button type="button" class="wf-convert" (click)="convert(e)" [attr.aria-label]="'Design a habit from ' + e.text">
+              {{ rating === 'negative' ? 'Break it →' : rating === 'neutral' ? 'Improve →' : 'Reinforce →' }}
+            </button>
+          </li>
+        </ul>
+        <span class="more-hint" *ngIf="byRating(rating).length > 4">+{{ byRating(rating).length - 4 }} more in Scorecard</span>
+      </div>
+    </div>
+    <ng-template #noScore>
+      <p class="empty">No scorecard entries yet. <a routerLink="/scorecard">Add your first + − =</a> — e.g. "Checking phone after waking" as <strong class="tag negative">−</strong>.</p>
+    </ng-template>
+
+    <div class="wf-callout">
+      <strong>Where the list goes:</strong> every <span class="tag negative">−</span> or <span class="tag neutral">=</span> becomes a habit in Step 2. Tap <em>Break it →</em> or <em>Improve →</em> to pre-fill the 4-Laws form below. <span class="tag positive">+</span> entries become habits to reinforce — same flow.
+    </div>
+  </section>
+
+  <!-- STEP 2: DESIGN -->
+  <section class="wf-step" id="step-design" *ngIf="!isLoading">
+    <div class="wf-step-header">
+      <span class="wf-badge">Step 2 · The Four Laws</span>
+      <h3>Design — Make it Obvious, Attractive, Easy, Satisfying</h3>
+      <p class="wf-hint">Each habit is the 4 Laws: <b>Cue</b> (obvious) + <b>Identity</b> (attractive) + <b>2-min version</b> (easy) + <b>Reward</b> (satisfying). Stack it after an existing habit → <em>After [CURRENT], I will [NEW]</em>.</p>
+    </div>
+
+    <div class="wf-convert-banner" *ngIf="draftSource">
+      Designing from scorecard: <strong>"{{ draftSource.text }}"</strong> <span class="tag" [ngClass]="draftSource.rating">{{ draftSource.rating === 'positive' ? '+' : draftSource.rating === 'negative' ? '−' : '=' }}</span>
+      <button type="button" class="ghost small" (click)="clearDraft()">Clear</button>
+    </div>
+
+    <form class="wf-form" (ngSubmit)="createHabit()">
+      <div class="wf-grid">
+        <div class="field"><label for="wf-name">Habit name *</label><input id="wf-name" [(ngModel)]="draft.name" name="wfName" placeholder="e.g. Read 10 pages" required /></div>
+        <div class="field"><label for="wf-identity">Identity — Make it Attractive</label><input id="wf-identity" [(ngModel)]="draft.identity" name="wfIdentity" placeholder="I am a reader" /></div>
+        <div class="field"><label for="wf-mini">2-minute version — Make it Easy</label><input id="wf-mini" [(ngModel)]="draft.miniVersion" name="wfMini" placeholder="Read 1 page" /></div>
+        <div class="field"><label for="wf-cue">Cue — Make it Obvious</label><input id="wf-cue" [(ngModel)]="draft.cue" name="wfCue" placeholder="After breakfast" /></div>
+        <div class="field"><label for="wf-reward">Reward — Make it Satisfying</label><input id="wf-reward" [(ngModel)]="draft.reward" name="wfReward" placeholder="A coffee I enjoy" /></div>
+        <div class="field"><label for="wf-stack">Habit Stack — After...</label>
+          <select id="wf-stack" [(ngModel)]="draft.stackedAfter" name="wfStack">
+            <option value="">No stack</option>
+            <option *ngFor="let h of habits" [value]="h._id">After {{ h.name }}</option>
+          </select>
+        </div>
+        <div class="field"><label for="wf-reminder">Reminder</label><input id="wf-reminder" type="time" [(ngModel)]="draft.reminderTime" name="wfReminder" /></div>
+      </div>
+      <button type="submit" class="primary" [disabled]="isCreating || !draft.name.trim()">{{ isCreating ? 'Creating...' : (draftSource ? 'Create habit from scorecard →' : 'Create habit') }}</button>
+      <span class="success-message" *ngIf="createMsg" role="status" aria-live="polite">{{ createMsg }}</span>
+    </form>
+  </section>
+
+  <!-- STEP 3: DO -->
+  <section class="wf-step" *ngIf="!isLoading">
+    <div class="wf-step-header">
+      <span class="wf-badge">Step 3 · Execution</span>
+      <h3>Do — Streak & Never Miss Twice</h3>
+      <p class="wf-hint">1% daily = 37× yearly. Check in today; if you missed yesterday, today is the test — <em>never miss twice</em> is the chain you're protecting.</p>
+    </div>
+
+    <div *ngIf="habits.length; else noHabits">
+      <div class="wf-habit-row" *ngFor="let h of habits" [class.at-risk]="isAtRisk(h._id)">
+        <div class="wf-habit-main">
+          <span class="wf-habit-name">{{ h.name }}</span>
+          <span class="wf-habit-meta" *ngIf="h.cue">Cue: {{ h.cue }}</span>
+          <span class="wf-habit-meta at-risk-label" *ngIf="isAtRisk(h._id)">⚠ Don't miss today — 2 misses breaks the chain</span>
+        </div>
+        <div class="wf-habit-actions">
+          <span class="wf-streak">{{ streaks[h._id]?.streak || 0 }} day streak</span>
+          <button type="button" class="primary small" (click)="checkIn(h._id)" [disabled]="streaks[h._id]?.doneToday || checkingIds.has(h._id)">
+            {{ streaks[h._id]?.doneToday ? '✓ Done' : (checkingIds.has(h._id) ? '...' : 'Mark Done') }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <ng-template #noHabits><p class="empty">No habits yet — design one in Step 2 above.</p></ng-template>
+  </section>
+
+  <!-- STEP 4: REFLECT -->
+  <section class="wf-step" *ngIf="!isLoading">
+    <div class="wf-step-header">
+      <span class="wf-badge">Step 4 · Systems Review</span>
+      <h3>Reflect — Weekly Review & Tracker</h3>
+      <p class="wf-hint">Every week: what worked, what didn't, <em>one</em> tweak. Fix the inputs and the outputs fix themselves.</p>
+    </div>
+    <div class="wf-review-preview">
+      <p *ngIf="!pastReviews.length" class="empty">No weekly reviews yet. After a few days of Step 3, do your first review.</p>
+      <ul *ngIf="pastReviews.length">
+        <li *ngFor="let r of pastReviews.slice(0,2)"><strong>Week of {{ r.weekStart }}:</strong> Tweak — {{ r.tweak || '—' }}</li>
+      </ul>
+      <a routerLink="/weekly-review" class="wf-link">Open Weekly Review →</a>
+      <a routerLink="/trends" class="wf-link" style="margin-left: 16px;">See Trends →</a>
+    </div>
+  </section>
+
+  <div class="wf-templates" *ngIf="!isLoading">
+    <h4>📋 Appendix templates from the book (printable in the deck + docs)</h4>
+    <p>Habit Scorecard, Habit Stacking sheet, 30-day Habit Tracker, Habit Contract — all in <a routerLink="/settings">Settings → About</a> and in <code>docs/templates/</code> when generated. The deck <code>docs/Atomic-Features-Deck.pptx</code> walks each template slide-by-slide.</p>
+  </div>
+</div>

@@ -14,6 +14,15 @@
     </div>
 
     <nav class="main-nav" aria-label="Main" *ngIf="authService.isAuthenticated()">
+      <a routerLink="/workflow" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 6h12M12 6v12M8 18h12" stroke-width="1.75"></path>
+          <circle cx="6" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+          <circle cx="6" cy="12" r="2" fill="currentColor" stroke="none"></circle>
+          <circle cx="6" cy="18" r="2" fill="currentColor" stroke="none"></circle>
+        </svg>
+        <span class="nav-label">Workflow</span>
+      </a>
       <a routerLink="/habits" routerLinkActive="active" ariaCurrentWhenActive="page">
         <svg class="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="9"></circle>

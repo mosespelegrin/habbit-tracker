@@ -124,8 +124,17 @@ npx cap open android   # opens Android Studio - Run, or Build > Build Bundle(s) 
 `npx cap sync android` after every web change (or use `npm run build:app`). To produce a release APK:
 Android Studio → Build → Generate Signed Bundle/APK.
 
-Launcher icons and the splash screen are generated from `client/assets/icon.png` (the project's own
-512px icon) — rerun `npm run assets:android` after changing it.
+Launcher icons and the splash screen are generated from `client/assets/icon.png` (512 px, the
+project's own icon). The vector source is `client/assets/icon.svg` — edit that, then:
+
+```bash
+node client/assets/render-icon.js   # SVG → 512 px PNG (needs Chrome + puppeteer-core)
+npm run assets:android               # PNG → Android mipmap + splash drawables
+npx cap sync android
+```
+
+See [`docs/feature-guide.md`](./docs/feature-guide.md#icon) for the current icon's meaning, and
+[`docs/Atomic-Features-Deck.pptx`](./docs/Atomic-Features-Deck.pptx) for the feature-by-quote deck.
 
 To rebuild the native shell from scratch (already committed): `npx cap add android`.
 
