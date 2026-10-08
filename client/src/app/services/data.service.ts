@@ -1,21 +1,41 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { apiBaseUrl } from '../config/api';
+import { Observable, of, throwError } from 'rxjs';
+import { LocalStoreService } from './local-store.service';
 
+const local = <T>(work: () => T): Observable<T> => {
+  try {
+    return of(work());
+  } catch (err: any) {
+    return throwError(() => ({ error: { message: err?.message || 'Something went wrong' } }));
+  }
+};
+
+/**
+ * Backup export/import - reads and writes the local store directly, so a backup contains
+ * everything the app knows: habits, check-ins, the scorecard and weekly reviews.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  private apiBaseUrl = apiBaseUrl();
-  private url = `${this.apiBaseUrl}/data`;
+  constructor(private store: LocalStoreService) {}
 
-  constructor(private httpClient: HttpClient) { }
-
-  exportData() {
-    return this.httpClient.get(`${this.url}/export`);
+  exportData(): Observable<any> {
+    return local(() => this.store.exportSnapshot());
   }
 
-  importData(payload: { habits: any[]; checkins: any[] }) {
-    return this.httpClient.post<{ importedHabits: number; importedCheckins: number }>(`${this.url}/import`, payload);
+  importData(payload: {
+    habits: any[];
+    checkins: any[];
+    scorecard?: any[];
+    reviews?: any[];
+  }): Observable<{ importedHabits: number; importedCheckins: number }> {
+    return local(() => {
+      const result = this.store.importSnapshot(payload);
+      return {
+        importedHabits: result.importedHabits,
+        importedCheckins: result.importedCheckins
+      };
+    });
   }
 }

@@ -14,26 +14,6 @@
   font-size: 1rem;
 }
 
-.account-email {
-  margin: 0 0 12px;
-  color: var(--text-muted);
-}
-
-button.danger {
-  min-height: 44px;
-  padding: 10px 16px;
-  background: var(--danger-solid);
-  color: white;
-  border: none;
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-button.danger:hover {
-  background: var(--danger-solid-hover);
-}
-
 .push-enabled-row {
   display: flex;
   align-items: center;
@@ -89,10 +69,6 @@ button.danger:hover {
   inset: 0;
   opacity: 0;
   cursor: pointer;
-}
-
-.server-field {
-  margin-bottom: 12px;
 }
 
 .permission-status {
@@ -181,25 +157,4 @@ button.danger:hover {
   margin: 0 0 6px;
   color: var(--text-muted);
   font-size: 0.88rem;
-}
-
-.server-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.server-actions button {
-  min-height: 44px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--card-bg);
-  color: var(--text);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.server-actions button.primary {
-  border: none;
 }

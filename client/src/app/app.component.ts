@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthService } from './services/auth.service';
 
 const QUOTES: string[] = [
   'You do not rise to the level of your goals. You fall to the level of your systems.',
@@ -24,7 +23,7 @@ export class AppComponent {
   quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   darkMode = false;
 
-  constructor(public authService: AuthService) {
+  constructor() {
     let saved: string | null = null;
     try {
       saved = localStorage.getItem('habitTrackerTheme');

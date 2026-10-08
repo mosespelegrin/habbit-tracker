@@ -1,11 +1,22 @@
 .panel {
-  max-width: 1000px;
-  margin: 0 auto 40px;
-  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto 32px;
+  padding: 28px;
   background: var(--card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow), var(--panel-edge);
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(24, 54, 64, 0.10), var(--panel-edge);
+  }
+  .panel h2 {
+    font-size: 1.35rem;
+    letter-spacing: 0.03em;
+  }
 }
 
 :root[data-theme="light"] .panel {

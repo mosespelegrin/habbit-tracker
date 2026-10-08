@@ -1,16 +1,21 @@
 # Atomic — Habit Streak Tracker
 
-A MEAN-stack habit tracker built around James Clear's *Atomic Habits*: identity-based habits, the Four Laws of Behavior Change (cue, craving, response, reward), habit stacking, streaks, a habit scorecard, weekly reviews, and a completion trend chart.
+A habit tracker built around James Clear's *Atomic Habits*: identity-based habits, the Four Laws of Behavior Change (cue, craving, response, reward), habit stacking, streaks, a habit scorecard, weekly reviews, and a completion trend chart - **now fully offline**: every feature runs on-device with no account, no login and no server.
 
 ## Stack
 
 - **Client**: Angular 17 (standalone components, signals) + [Capacitor](https://capacitorjs.com/) for the native Android app
-- **Server**: Node.js + Express 5 + Mongoose 9 (MongoDB)
-- **Auth**: JWT bearer tokens, bcrypt-hashed passwords, a strong server-enforced password policy
-- **Reminders**: local notifications on the device (`@capacitor/local-notifications`), timezone-aware per user
+- **Data**: 100% on-device (localStorage-backed `LocalStoreService`) - no network required, airplane-mode compatible
+- **Server (optional/legacy)**: Node.js + Express 5 + Mongoose 9 (MongoDB) - kept in the repo for the old API deployment; the app no longer calls it
+- **Reminders**: local notifications on the device (`@capacitor/local-notifications`)
 
 ## Features
 
+- **Grow or break**: every habit has a direction - *grow* uses the 4 Laws (cue, identity, 2-minute
+  version, reward), *break* uses the inverse laws of ch. 5 (remove the cue, unattractive identity,
+  20-second friction, an accountability contract); the Habits page labels and verbs switch accordingly
+- **Pure offline**: no login, no server - habits, check-ins, scorecard and reviews live in this
+  device's local storage (Settings → Offline mode)
 - Identity, cue, 2-minute version, reward, and habit stacking per habit (the Four Laws)
 - Daily check-ins, current streak, personal-best streak, and a 90-day heatmap
 - Habit Scorecard (rate your everyday habits +/−/=, from ch. 1 of the book)
@@ -39,6 +44,9 @@ server/              Express API (listens on :3000 by default)
 ```
 
 ## Local development
+
+> The client itself needs no server - it is pure offline. The server below is only needed if you are
+> working on the legacy API (`server/`, also what Render deploys).
 
 ### Prerequisites
 
@@ -98,19 +106,15 @@ on port 4200, `/api` on the same origin when hosted, and `API_ORIGIN` for the na
 ## Mobile app (Capacitor)
 
 The app is wrapped with Capacitor, the toolchain Angular's own mobile guides point at for turning a web
-app into a native one. The Angular build is bundled *inside* the app; only API calls go over the network.
+app into a native one. The Angular build is bundled *inside* the app, and **all data is stored on the
+device** - there is no API configuration step anymore; the app works out of the box, including in
+airplane mode.
 
 ### One-time configuration
 
-The native WebView does not share an origin with your server, so tell it where the API lives. You do
-**not** need to edit code for this: open the app → **Settings → Server → API address**, type the server
-URL (e.g. `https://atomic-habit-tracker.onrender.com`), tap **Test connection**, then **Save & reload**.
-The choice is stored on the device and overrides the compiled-in default (`client/src/app/config/api.ts`,
-which ships pointing at the dev LAN address for first-run testing).
-
-Deploy the server first (see [`DEPLOYMENT.md`](./DEPLOYMENT.md)) — the packaged app talks to that URL.
-The server already allows the app's WebView origins (`capacitor://localhost`, `http://localhost`); if you
-override `CLIENT_ORIGINS` yourself, add them back.
+None. Older versions pointed the app at a server URL (Settings → Server); that section is gone. If you
+have data from the old cloud version, export it as JSON on the old install and import it under
+**Settings → Backup** on the new one.
 
 ### Build it
 

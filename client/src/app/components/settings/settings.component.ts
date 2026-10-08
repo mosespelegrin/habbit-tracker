@@ -1,13 +1,10 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
-import { AuthService } from '../../services/auth.service';
 import { ReminderService } from '../../services/reminder.service';
 import { HabitService } from '../../services/habit.service';
 import { DataService } from '../../services/data.service';
-import { ServerConfigService } from '../../services/server-config.service';
 
 @Component({
   selector: 'app-settings',
@@ -27,61 +24,11 @@ export class SettingsComponent {
   importMessage: string | null = null;
   dataError: string | null = null;
 
-  /** Native builds talk to an absolute API origin; the web build uses its own origin and hides this. */
-  readonly isNative = Capacitor.isNativePlatform();
-  serverUrl: string;
-  serverStatus: string | null = null;
-  serverError: string | null = null;
-  isTestingServer = false;
-
   constructor(
-    public authService: AuthService,
     public reminderService: ReminderService,
     private habitService: HabitService,
-    private dataService: DataService,
-    private router: Router,
-    private serverConfig: ServerConfigService
-  ) {
-    this.serverUrl = this.serverConfig.origin;
-  }
-
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
-  /** Validates the address and pings `/api/health` so a typo is caught before saving. */
-  testServer() {
-    this.serverStatus = null;
-    this.serverError = null;
-    this.isTestingServer = true;
-
-    this.serverConfig.test(this.serverUrl).then((result) => {
-      this.isTestingServer = false;
-      if (result.ok) {
-        this.serverStatus = result.message;
-        this.serverError = null;
-      } else {
-        this.serverStatus = null;
-        this.serverError = result.message;
-      }
-    });
-  }
-
-  /**
-   * Persists the override. Services build their base URL once at startup, so the app reloads
-   * to pick the new address up immediately instead of requiring a manual restart.
-   */
-  saveServer() {
-    this.serverError = null;
-
-    if (!this.serverConfig.save(this.serverUrl)) {
-      this.serverError = 'Enter a full address, e.g. http://192.168.1.100:3100';
-      return;
-    }
-
-    window.location.reload();
-  }
+    private dataService: DataService
+  ) {}
 
   /**
    * Just-in-time consent (MD A2): the first tap never triggers the system dialog - it opens the
@@ -180,7 +127,12 @@ export class SettingsComponent {
       const text = await file.text();
       const parsed = JSON.parse(text);
 
-      this.dataService.importData({ habits: parsed.habits || [], checkins: parsed.checkins || [] }).subscribe({
+      this.dataService.importData({
+        habits: parsed.habits || [],
+        checkins: parsed.checkins || [],
+        scorecard: parsed.scorecard || [],
+        reviews: parsed.reviews || []
+      }).subscribe({
         next: (result) => {
           this.isImporting = false;
           this.importMessage = `Imported ${result.importedHabits} habit(s) and ${result.importedCheckins} check-in(s).`;

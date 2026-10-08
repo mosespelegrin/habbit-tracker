@@ -118,9 +118,9 @@ The interface *is* the disciplined environment.
 
 **In the app:**
 - **Glass, not glare** — frosted panels over a morning-haze backdrop, teal pill buttons, dark + light themes, contrast tuned to WCAG AA (see `client/src/styles.css` tokens).
-- **Private by default** — plain-language privacy notice in Settings; what is stored, where, and the fact nothing tracks you. Export everything as JSON any time.
+- **Private by default** — plain-language "Offline mode" notice in Settings; what is stored (habits, check-ins, scorecard, reviews), where (this device only, nothing uploaded), and the fact nothing tracks you. Export everything as JSON any time.
 - **Accessible** — 44 px touch targets, visible focus rings, live regions for errors, `prefers-reduced-motion` respected.
-- **Hard to misuse** — JWT + bcrypt, strict per-user scoping (404, not 403), rate limits, and a two-step confirm on anything destructive (delete arms for 5 s, no `window.confirm()`).
+- **Hard to misuse** — no account to phish or leak (pure offline, no network calls), and a two-step confirm on anything destructive (delete arms for 5 s, no `window.confirm()`).
 
 ---
 
@@ -130,7 +130,35 @@ The interface *is* the disciplined environment.
 
 > Companion line, same idea: "Goals are good for setting a direction, but systems are best for making progress."
 
-**In the app:** the app *is* the system. That is the closing line of the deck and the promise on the login screen.
+**In the app:** the app *is* the system. That is the closing line of the deck, and the promise the Workflow page keeps — Awareness → Design → Do → Reflect, with the scorecard feeding each step.
+
+---
+
+## 13. Grow *and* break — every habit gets a direction
+
+> "The task of breaking a bad habit is like uprooting a powerful oak within us. And the task of building a good habit is like cultivating a delicate flower one day at a time." — James Clear, *Atomic Habits* (verified on jamesclear.com/atomic-habits-quotes)
+
+> "In the long-run (and often in the short-run), your willpower will never beat your environment. The more disciplined your environment is, the less disciplined you need to be. Don't swim upstream." — James Clear (verified, 3-2-1 Newsletter, Nov 27 2025)
+
+Chapter 5 says the same four laws, run backwards, dismantle a bad habit. So every habit in the app now carries a **direction**:
+
+**In the app:**
+- **Grow (4 Laws)** — the existing fields: Cue (obvious), Identity (attractive), 2-minute version (easy), Reward (satisfying).
+- **Break (inverse Laws)** — same fields, opposite job: *Cue → make it invisible* (remove the trigger), *Identity → make it unattractive* (who you'd become without it), *Friction → make it difficult* (the 20-second rule), *Contract → make it unsatisfying* (someone else is watching).
+- **Design (Workflow Step 2)** has a Grow/Break toggle; a `−` scorecard entry pre-fills a break habit automatically.
+- **Check-ins flip vocabulary** — break habits show a BREAK badge and the button says **"I resisted today"**; resisting is the vote that counts.
+- **Reference card** on the Habits page lists both sets of laws side by side.
+
+---
+
+## 14. Pure offline — the disciplined environment, now local
+
+> "The more disciplined your environment is, the less disciplined you need to be." — James Clear (verified, 3-2-1 Newsletter, Nov 27 2025)
+
+**In the app:**
+- Everything lives on-device (`LocalStoreService`): no login, no server, no network — works in airplane mode.
+- Streak math, history, trend, stacks and duplicate check-in protection behave exactly like the old API, reimplemented locally and covered by 13 unit specs.
+- Settings → Backup exports/imports the whole store as JSON (dedupe on import), so the local copy is still yours to move.
 
 ---
 

@@ -1,10 +1,9 @@
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideAnimations, provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
-import { authInterceptor } from './interceptors/auth.interceptor';
 
 const prefersReducedMotion = typeof window !== 'undefined'
   && window.matchMedia
@@ -13,7 +12,8 @@ const prefersReducedMotion = typeof window !== 'undefined'
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    // No auth interceptor anymore - the app is pure offline and never calls an API.
+    provideHttpClient(),
     prefersReducedMotion ? provideNoopAnimations() : provideAnimations()
   ]
 };

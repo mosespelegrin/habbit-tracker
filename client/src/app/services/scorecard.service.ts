@@ -1,34 +1,34 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { apiBaseUrl } from '../config/api';
+import { Observable, of, throwError } from 'rxjs';
+import { LocalStoreService } from './local-store.service';
+import type { ScorecardEntry, ScorecardRating } from './local-store.service';
 
-export type ScorecardRating = 'positive' | 'negative' | 'neutral';
+export type { ScorecardEntry, ScorecardRating };
 
-export interface ScorecardEntry {
-  _id: string;
-  text: string;
-  rating: ScorecardRating;
-  createdAt: string;
-}
+const local = <T>(work: () => T): Observable<T> => {
+  try {
+    return of(work());
+  } catch (err: any) {
+    return throwError(() => ({ error: { message: err?.message || 'Something went wrong' } }));
+  }
+};
 
+/** Habit Scorecard (+/-/=) - fully local, works offline. */
 @Injectable({
   providedIn: 'root'
 })
 export class ScorecardService {
-  private apiBaseUrl = apiBaseUrl();
-  private url = `${this.apiBaseUrl}/scorecard`;
+  constructor(private store: LocalStoreService) {}
 
-  constructor(private httpClient: HttpClient) { }
-
-  list() {
-    return this.httpClient.get<ScorecardEntry[]>(this.url);
+  list(): Observable<ScorecardEntry[]> {
+    return local(() => this.store.listScorecard());
   }
 
-  add(text: string, rating: ScorecardRating) {
-    return this.httpClient.post<ScorecardEntry>(this.url, { text, rating });
+  add(text: string, rating: ScorecardRating): Observable<ScorecardEntry> {
+    return local(() => this.store.addScorecardEntry(text, rating));
   }
 
-  remove(id: string) {
-    return this.httpClient.delete(`${this.url}/${id}`);
+  remove(id: string): Observable<ScorecardEntry> {
+    return local(() => this.store.removeScorecardEntry(id));
   }
 }

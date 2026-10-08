@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Pure offline mode**: all data now lives on the device in `LocalStoreService`
+  (localStorage) - no login, no account, no server. Streak/history/trend/stack math from the API was
+  reimplemented locally, so the app works in airplane mode; the login/register screens, auth guard,
+  auth interceptor and Server setting were removed. Settings → Offline mode + privacy notice updated.
+- **Grow / Break habit direction**: habits carry a `kind`. *Grow* habits use the Four Laws; *break*
+  habits use the inverted laws from ch. 5 (Make it Invisible / Unattractive / Difficult / Unsatisfying)
+  with swapped labels, a BREAK badge, "I resisted today" check-ins and contract wording. The Workflow
+  design step has a Grow/Break toggle; a "−" scorecard entry pre-fills a break habit automatically.
+- **Local-store unit tests** (13 Karma specs incl. streak math, duplicate check-in protection,
+  export/import dedupe).
 - **Native Android app (Capacitor)**: `client/android/` shell that bundles the built web app;
   launcher icons + splash generated from the project icon. Java 21 toolchain auto-provisioned via the
   `foojay-resolver-convention` Gradle plugin.
@@ -27,13 +37,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- API origin default is now a runtime, user-editable value instead of a compile-time constant.
+- Bundle dropped under its 500 kB budget (dead auth/API code tree-shaken out).
 - CORS defaults extended with the Capacitor WebView origins (`capacitor://localhost`, `http://localhost`).
 - Destructive and primary actions styled as pill buttons; inputs use translucent fields; consent/error
   copy kept at readable contrast in both themes.
 
 ### Removed
 
+- **Login / register, auth guard, auth interceptor, JWT flow and the Server setting**: obsolete now
+  that the app is pure offline (single user per device).
 - **PWA layer**: Angular service worker, `manifest.webmanifest`, offline caching, and Web Push.
   Reminder notifications moved to native local notifications (`@capacitor/local-notifications`),
   so VAPID keys are no longer used anywhere.

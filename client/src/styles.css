@@ -30,6 +30,7 @@
   --primary-solid: #0e7486;
   --primary-solid-hover: #0a5c6b;
   --primary-text: #7ee3f2;
+  --primary-soft: rgba(95, 211, 227, 0.14);
   --accent: #f2a65a;
   --success-solid: #0f7a4f;
   --success-solid-hover: #0c6240;
@@ -53,13 +54,13 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #e6eef1;
+  --bg: #eef3f5;
   --bg-gradient:
-    radial-gradient(1000px 480px at 78% -100px, rgba(255, 186, 110, 0.34), transparent 65%),
-    radial-gradient(760px 420px at 6% 8%, rgba(96, 196, 214, 0.28), transparent 60%),
-    linear-gradient(180deg, #f2f7f9 0%, #e6eef1 520px);
-  --card-bg: rgba(255, 255, 255, 0.66);
-  --card-bg-subtle: rgba(255, 255, 255, 0.45);
+    radial-gradient(1000px 480px at 78% -100px, rgba(255, 186, 110, 0.24), transparent 65%),
+    radial-gradient(760px 420px at 6% 8%, rgba(96, 196, 214, 0.20), transparent 60%),
+    linear-gradient(180deg, #f6f9fb 0%, #eef3f5 520px);
+  --card-bg: rgba(255, 255, 255, 0.82);
+  --card-bg-subtle: rgba(255, 255, 255, 0.68);
   --text: #0e2229;
   --text-muted: #3f5a64;
   --text-faint: #5c757f;
@@ -69,6 +70,7 @@
   --primary-solid: #0e7486;
   --primary-solid-hover: #0a5c6b;
   --primary-text: #0b5f6e;
+  --primary-soft: rgba(14, 116, 134, 0.12);
   --accent: #d97728;
   --success-solid: #0f7a4f;
   --success-solid-hover: #0c6240;
@@ -118,14 +120,12 @@ body {
  */
 .panel,
 .habit-tracker,
-.auth-card,
 .level-card,
 .ring-card,
 .stat-card,
 .habit-item,
 .four-laws,
-.push-enabled-row,
-.server-actions {
+.push-enabled-row {
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }

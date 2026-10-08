@@ -60,9 +60,18 @@
   </section>
 
   <details class="four-laws">
-    <summary>The Four Laws of Behavior Change</summary>
+    <summary>The Four Laws of Behavior Change (+ how to invert them)</summary>
+    <h4>Grow a good habit</h4>
     <ul>
       <li *ngFor="let item of fourLaws">
+        <strong>{{ item.law }}</strong>
+        <span class="four-laws-field">{{ item.field }}</span>
+        <span class="four-laws-hint">{{ item.hint }}</span>
+      </li>
+    </ul>
+    <h4>Break a bad habit — same laws, run backwards (ch. 5)</h4>
+    <ul>
+      <li *ngFor="let item of inverseLaws">
         <strong>{{ item.law }}</strong>
         <span class="four-laws-field">{{ item.field }}</span>
         <span class="four-laws-hint">{{ item.hint }}</span>
@@ -79,54 +88,61 @@
       </select>
     </div>
     <div class="field">
-      <label for="new-habit-name">Habit name</label>
+      <label for="new-habit-kind">Direction</label>
+      <select id="new-habit-kind" [(ngModel)]="newHabit.kind" name="newHabitKind">
+        <option value="grow">Grow a good habit (4 Laws)</option>
+        <option value="break">Break a bad habit (Inverse Laws)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="new-habit-name">{{ newHabit.kind === 'break' ? 'Habit to break' : 'Habit name' }}</label>
       <input
         id="new-habit-name"
         type="text"
         [(ngModel)]="newHabit.name"
         name="newHabitName"
-        placeholder="e.g. Gym, Read 30 mins"
+        [placeholder]="newHabit.kind === 'break' ? 'e.g. Scrolling after waking' : 'e.g. Gym, Read 30 mins'"
         required
       />
     </div>
     <div class="field">
-      <label for="new-habit-identity">Identity</label>
+      <label for="new-habit-identity">{{ newHabit.kind === 'break' ? 'Identity — who you become without it' : 'Identity' }}</label>
       <input
         id="new-habit-identity"
         type="text"
         [(ngModel)]="newHabit.identity"
         name="newHabitIdentity"
-        placeholder="e.g. I am a daily reader"
+        [placeholder]="newHabit.kind === 'break' ? 'e.g. I am free from the feed' : 'e.g. I am a daily reader'"
       />
     </div>
     <div class="field">
-      <label for="new-habit-mini">2-minute version</label>
+      <label for="new-habit-mini">{{ newHabit.kind === 'break' ? 'Friction to add (20-second rule)' : '2-minute version' }}</label>
       <input
         id="new-habit-mini"
         type="text"
         [(ngModel)]="newHabit.miniVersion"
         name="newHabitMiniVersion"
-        placeholder="e.g. Read 1 page"
+        [placeholder]="newHabit.kind === 'break' ? 'e.g. Leave the phone in another room' : 'e.g. Read 1 page'"
       />
     </div>
     <div class="field">
-      <label for="new-habit-cue">Cue</label>
+      <label for="new-habit-cue">{{ newHabit.kind === 'break' ? 'Cue to remove (make it invisible)' : 'Cue' }}</label>
       <input
         id="new-habit-cue"
         type="text"
         [(ngModel)]="newHabit.cue"
         name="newHabitCue"
-        placeholder="e.g. After breakfast"
+        [placeholder]="newHabit.kind === 'break' ? 'e.g. Delete the app from the home screen' : 'e.g. After breakfast'"
       />
     </div>
     <div class="field">
-      <label for="new-habit-reward">Reward</label>
+      <label for="new-habit-reward">{{ newHabit.kind === 'break' ? 'Contract if you slip (make it unsatisfying)' : 'Reward' }}</label>
       <input
         id="new-habit-reward"
         type="text"
         [(ngModel)]="newHabit.reward"
         name="newHabitReward"
-        placeholder="e.g. A coffee I enjoy"
+        [placeholder]="newHabit.kind === 'break' ? 'e.g. Pay $5 to my jar if I slip' : 'e.g. A coffee I enjoy'"
       />
     </div>
     <div class="field">
@@ -161,19 +177,19 @@
           <input [id]="'edit-name-' + habit._id" type="text" [(ngModel)]="editDraft.name" name="editName" required />
         </div>
         <div class="field">
-          <label [attr.for]="'edit-identity-' + habit._id">Identity</label>
+          <label [attr.for]="'edit-identity-' + habit._id">{{ lawLabels(habit).identity }}</label>
           <input [id]="'edit-identity-' + habit._id" type="text" [(ngModel)]="editDraft.identity" name="editIdentity" />
         </div>
         <div class="field">
-          <label [attr.for]="'edit-mini-' + habit._id">2-minute version</label>
+          <label [attr.for]="'edit-mini-' + habit._id">{{ lawLabels(habit).mini }}</label>
           <input [id]="'edit-mini-' + habit._id" type="text" [(ngModel)]="editDraft.miniVersion" name="editMiniVersion" />
         </div>
         <div class="field">
-          <label [attr.for]="'edit-cue-' + habit._id">Cue</label>
+          <label [attr.for]="'edit-cue-' + habit._id">{{ lawLabels(habit).cue }}</label>
           <input [id]="'edit-cue-' + habit._id" type="text" [(ngModel)]="editDraft.cue" name="editCue" />
         </div>
         <div class="field">
-          <label [attr.for]="'edit-reward-' + habit._id">Reward</label>
+          <label [attr.for]="'edit-reward-' + habit._id">{{ lawLabels(habit).reward }}</label>
           <input [id]="'edit-reward-' + habit._id" type="text" [(ngModel)]="editDraft.reward" name="editReward" />
         </div>
         <div class="field">
@@ -199,9 +215,12 @@
     <ng-template #viewMode>
       <div class="habit-main">
         <span class="identity" *ngIf="habit.identity">{{ habit.identity }}</span>
-        <span class="habit-name">{{ displayedHabitName(habit) }}</span>
-        <span class="cue" *ngIf="habit.cue">Cue: {{ habit.cue }}</span>
-        <span class="reward" *ngIf="habit.reward">Reward: {{ habit.reward }}</span>
+        <span class="habit-name">
+          {{ displayedHabitName(habit) }}
+          <span class="kind-badge" [class.kind-break]="isBreak(habit)">{{ isBreak(habit) ? 'BREAK' : 'GROW' }}</span>
+        </span>
+        <span class="cue" *ngIf="habit.cue">{{ isBreak(habit) ? 'Remove cue:' : 'Cue:' }} {{ habit.cue }}</span>
+        <span class="reward" *ngIf="habit.reward">{{ isBreak(habit) ? 'Contract:' : 'Reward:' }} {{ habit.reward }}</span>
         <span class="reminder" *ngIf="habit.reminderTime">Reminder: {{ habit.reminderTime }}</span>
 
         <button
@@ -214,7 +233,7 @@
         </button>
 
         <span class="danger-badge" *ngIf="isDangerZone(habit._id)">
-          Don't miss today - 2 misses breaks the chain.
+          {{ isBreak(habit) ? "You slipped yesterday - don't slip twice." : "Don't miss today - 2 misses breaks the chain." }}
         </span>
 
         <div class="heatmap" *ngIf="histories[habit._id]?.length" role="img" [attr.aria-label]="'Last ' + histories[habit._id].length + ' days check-in history'">
@@ -242,7 +261,9 @@
           (click)="checkIn(habit._id)"
           [disabled]="streaks[habit._id]?.doneToday || checkingInIds.has(habit._id)"
         >
-          {{ streaks[habit._id]?.doneToday ? '✓ Done today' : (checkingInIds.has(habit._id) ? 'Saving...' : 'Mark Done Today') }}
+          {{ streaks[habit._id]?.doneToday
+            ? (isBreak(habit) ? '✓ Resisted today' : '✓ Done today')
+            : (checkingInIds.has(habit._id) ? 'Saving...' : (isBreak(habit) ? 'I resisted today' : 'Mark Done Today')) }}
         </button>
         <button type="button" class="edit-btn" (click)="startEdit(habit)">Edit</button>
         <button

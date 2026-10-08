@@ -34,6 +34,7 @@ interface HabitDraft {
   reward: string;
   stackedAfter: string;
   reminderTime: string;
+  kind: 'grow' | 'break';
 }
 
 interface HabitTemplate {
@@ -52,7 +53,8 @@ const emptyDraft = (): HabitDraft => ({
   cue: '',
   reward: '',
   stackedAfter: '',
-  reminderTime: ''
+  reminderTime: '',
+  kind: 'grow'
 });
 
 const HABIT_TEMPLATES: HabitTemplate[] = [
@@ -100,6 +102,14 @@ export class HabitListComponent implements OnInit, OnDestroy {
     { law: 'Make it Attractive', field: 'Identity', hint: 'Tie the habit to who you want to become.' },
     { law: 'Make it Easy', field: '2-Minute Version', hint: 'Shrink it down so starting takes no willpower.' },
     { law: 'Make it Satisfying', field: 'Reward', hint: 'Give yourself an immediate, small payoff.' }
+  ];
+
+  // Chapter 5: the same four laws inverted to dismantle a bad habit.
+  readonly inverseLaws = [
+    { law: 'Make it Invisible', field: 'Cue', hint: 'Reduce exposure - remove the cue from your environment.' },
+    { law: 'Make it Unattractive', field: 'Identity', hint: 'Name the cost - who does this habit turn you into?' },
+    { law: 'Make it Difficult', field: 'Friction', hint: 'Add 20 seconds of friction between you and the urge.' },
+    { law: 'Make it Unsatisfying', field: 'Contract', hint: 'Add accountability - someone else is watching.' }
   ];
 
   readonly templates = HABIT_TEMPLATES;
@@ -181,7 +191,8 @@ export class HabitListComponent implements OnInit, OnDestroy {
       identity: template.identity,
       miniVersion: template.miniVersion,
       cue: template.cue,
-      reward: template.reward
+      reward: template.reward,
+      kind: 'grow'
     };
   }
 
@@ -195,7 +206,8 @@ export class HabitListComponent implements OnInit, OnDestroy {
       cue: this.newHabit.cue.trim(),
       reward: this.newHabit.reward.trim(),
       stackedAfter: this.newHabit.stackedAfter || null,
-      reminderTime: this.newHabit.reminderTime || ''
+      reminderTime: this.newHabit.reminderTime || '',
+      kind: (this.newHabit.kind === 'break' ? 'break' : 'grow') as 'grow' | 'break'
     };
 
     this.isAddingHabit = true;
@@ -222,7 +234,8 @@ export class HabitListComponent implements OnInit, OnDestroy {
       cue: habit.cue || '',
       reward: habit.reward || '',
       stackedAfter: habit.stackedAfter || '',
-      reminderTime: habit.reminderTime || ''
+      reminderTime: habit.reminderTime || '',
+      kind: habit.kind === 'break' ? 'break' : 'grow'
     };
   }
 
@@ -234,6 +247,7 @@ export class HabitListComponent implements OnInit, OnDestroy {
   saveEdit(habitId: string) {
     if (!this.editDraft.name.trim() || this.isSavingEdit) return;
 
+    const current = this.habits.find((habit) => habit._id === habitId);
     const habit = {
       name: this.editDraft.name.trim(),
       identity: this.editDraft.identity.trim(),
@@ -241,7 +255,8 @@ export class HabitListComponent implements OnInit, OnDestroy {
       cue: this.editDraft.cue.trim(),
       reward: this.editDraft.reward.trim(),
       stackedAfter: this.editDraft.stackedAfter || null,
-      reminderTime: this.editDraft.reminderTime || ''
+      reminderTime: this.editDraft.reminderTime || '',
+      kind: (current?.kind === 'break' ? 'break' : 'grow') as 'grow' | 'break'
     };
 
     this.isSavingEdit = true;
@@ -270,12 +285,15 @@ export class HabitListComponent implements OnInit, OnDestroy {
     this.habitService.checkInHabit(habitId).subscribe({
       next: () => {
         this.checkingInIds.delete(habitId);
-        this.showToast(
-          habit?.reward
-            ? `Habit complete - enjoy your reward: ${habit.reward}`
-            : 'Habit complete - another vote cast for who you want to become.',
-          'success'
-        );
+        if (habit?.kind === 'break') {
+          this.showToast(`Resisted — one less vote for "${habit.name}".`);
+        } else {
+          this.showToast(
+            habit?.reward
+              ? `Habit complete - enjoy your reward: ${habit.reward}`
+              : 'Habit complete - another vote cast for who you want to become.'
+          );
+        }
         this.loadHabits();
       },
       error: (err) => {
@@ -348,6 +366,28 @@ export class HabitListComponent implements OnInit, OnDestroy {
   isDangerZone(habitId: string) {
     const streak = this.streaks[habitId];
     return streak?.missedYesterday && !streak?.doneToday;
+  }
+
+  /** True when this habit is one the user is trying to break (inverse 4 Laws). */
+  isBreak(habit: any): boolean {
+    return habit?.kind === 'break';
+  }
+
+  /** Field labels swap to the inverse laws' vocabulary for break habits. */
+  lawLabels(habit: any) {
+    return habit?.kind === 'break'
+      ? {
+          identity: 'Identity — who you become without it',
+          mini: 'Friction to add (20-second rule)',
+          cue: 'Cue to remove (make it invisible)',
+          reward: 'Contract if you slip (make it unsatisfying)'
+        }
+      : {
+          identity: 'Identity',
+          mini: '2-minute version',
+          cue: 'Cue',
+          reward: 'Reward'
+        };
   }
 
   private showToast(message: string, type: 'success' | 'error' = 'success') {

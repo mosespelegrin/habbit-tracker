@@ -23,8 +23,8 @@ export class WorkflowComponent implements OnInit {
   isLoading = true;
   error: string | null = null;
 
-  // Scorecard -> Habit conversion draft (4 Laws)
-  draft = { name: '', identity: '', miniVersion: '', cue: '', reward: '', stackedAfter: '', reminderTime: '' };
+  // Scorecard -> Habit conversion draft (4 Laws / inverse Laws)
+  draft = { name: '', identity: '', miniVersion: '', cue: '', reward: '', stackedAfter: '', reminderTime: '', kind: 'grow' as 'grow' | 'break' };
   draftSource: ScorecardEntry | null = null;
   isCreating = false;
   createMsg: string | null = null;
@@ -81,21 +81,50 @@ export class WorkflowComponent implements OnInit {
 
   convert(entry: ScorecardEntry) {
     this.draftSource = entry;
-    // Pre-fill using the scorecard text — negative habits become "avoid" habits, positive become identities to reinforce
+    // Book flow: a "-" on the scorecard becomes a habit to BREAK (inverse 4 Laws, ch. 5),
+    // while "+" and "=" become habits to GROW (the 4 Laws, ch. 5).
     const isNegative = entry.rating === 'negative';
-    this.draft = {
-      name: entry.text.length > 40 ? entry.text.slice(0, 40) : entry.text,
-      identity: isNegative ? 'I am someone who avoids ' + entry.text.toLowerCase() : 'I am someone who ' + entry.text.toLowerCase(),
-      miniVersion: isNegative ? 'Pause 10 seconds before ' + entry.text.toLowerCase() : 'Start with 2 minutes of ' + entry.text.toLowerCase(),
-      cue: 'After I [existing habit]',
-      reward: isNegative ? 'A clear head' : 'A small win to enjoy',
-      stackedAfter: '',
-      reminderTime: ''
-    };
+    const lower = entry.text.toLowerCase();
+
+    this.draft = isNegative
+      ? {
+          name: entry.text.length > 40 ? entry.text.slice(0, 40) : entry.text,
+          identity: `I am free from ${lower}`,
+          miniVersion: 'Add 20 seconds of friction before the urge hits',
+          cue: 'Remove or hide the cue so the craving never fires',
+          reward: 'Tell someone if I slip - one witness is enough',
+          stackedAfter: '',
+          reminderTime: '',
+          kind: 'break'
+        }
+      : {
+          name: entry.text.length > 40 ? entry.text.slice(0, 40) : entry.text,
+          identity: `I am someone who ${lower}`,
+          miniVersion: 'Start with 2 minutes of ' + lower,
+          cue: 'After I [existing habit]',
+          reward: 'A small win to enjoy',
+          stackedAfter: '',
+          reminderTime: '',
+          kind: 'grow'
+        };
+
     document.getElementById('step-design')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  clearDraft() { this.draft = { name: '', identity: '', miniVersion: '', cue: '', reward: '', stackedAfter: '', reminderTime: '' }; this.draftSource = null; this.createMsg = null; }
+  setKind(kind: 'grow' | 'break') {
+    this.draft.kind = kind;
+    this.createMsg = null;
+  }
+
+  isBreak(habit: any): boolean {
+    return habit?.kind === 'break';
+  }
+
+  clearDraft() {
+    this.draft = { name: '', identity: '', miniVersion: '', cue: '', reward: '', stackedAfter: '', reminderTime: '', kind: 'grow' };
+    this.draftSource = null;
+    this.createMsg = null;
+  }
 
   createHabit() {
     if (!this.draft.name.trim() || this.isCreating) return;
@@ -107,11 +136,14 @@ export class WorkflowComponent implements OnInit {
       cue: this.draft.cue.trim(),
       reward: this.draft.reward.trim(),
       stackedAfter: this.draft.stackedAfter || null,
-      reminderTime: this.draft.reminderTime || ''
+      reminderTime: this.draft.reminderTime || '',
+      kind: this.draft.kind
     }).subscribe({
       next: () => {
         this.isCreating = false;
-        this.createMsg = `Habit "${this.draft.name}" created — it will appear in Step 3. Check it off today to start your streak.`;
+        this.createMsg = this.draft.kind === 'break'
+          ? `Breaking "${this.draft.name}" - mark each day you resist. Never miss twice: a slip is a data point, two is a pattern.`
+          : `Habit "${this.draft.name}" created — it will appear in Step 3. Check it off today to start your streak.`;
         if (this.draftSource) {
           // remove the source scorecard entry so the list visibly moves forward
           this.scorecardService.remove(this.draftSource._id).subscribe(() => {
@@ -144,7 +176,9 @@ export class WorkflowComponent implements OnInit {
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
     date.setDate(diff);
-    return date.toISOString().split('T')[0];
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const dayNum = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${dayNum}`;
   }
 
   habitCountForRating(rating: string) {

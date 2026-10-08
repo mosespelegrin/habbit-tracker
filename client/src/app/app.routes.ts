@@ -1,7 +1,4 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './guards/auth.guard';
-import { LoginComponent } from './components/login/login.component';
-import { RegisterComponent } from './components/register/register.component';
 import { HabitListComponent } from './components/habit-list/habit-list.component';
 import { ScorecardComponent } from './components/scorecard/scorecard.component';
 import { WeeklyReviewComponent } from './components/weekly-review/weekly-review.component';
@@ -9,15 +6,19 @@ import { TrendComponent } from './components/trend/trend.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { WorkflowComponent } from './components/workflow/workflow.component';
 
+/**
+ * Pure-offline routing: no login, no guards, no server. The app opens straight into the
+ * workflow; old login/register deep links (e.g. from a previous install) land there too.
+ */
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
-  { path: 'register', component: RegisterComponent, canActivate: [guestGuard] },
-  { path: 'workflow', component: WorkflowComponent, canActivate: [authGuard] },
-  { path: 'habits', component: HabitListComponent, canActivate: [authGuard] },
-  { path: 'scorecard', component: ScorecardComponent, canActivate: [authGuard] },
-  { path: 'weekly-review', component: WeeklyReviewComponent, canActivate: [authGuard] },
-  { path: 'trends', component: TrendComponent, canActivate: [authGuard] },
-  { path: 'settings', component: SettingsComponent, canActivate: [authGuard] },
+  { path: 'workflow', component: WorkflowComponent },
+  { path: 'habits', component: HabitListComponent },
+  { path: 'scorecard', component: ScorecardComponent },
+  { path: 'weekly-review', component: WeeklyReviewComponent },
+  { path: 'trends', component: TrendComponent },
+  { path: 'settings', component: SettingsComponent },
   { path: '', pathMatch: 'full', redirectTo: 'workflow' },
-  { path: '**', redirectTo: 'habits' }
+  { path: 'login', redirectTo: 'workflow' },
+  { path: 'register', redirectTo: 'workflow' },
+  { path: '**', redirectTo: 'workflow' }
 ];

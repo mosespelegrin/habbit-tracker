@@ -52,16 +52,17 @@
     </ng-template>
 
     <div class="wf-callout">
-      <strong>Where the list goes:</strong> every <span class="tag negative">−</span> or <span class="tag neutral">=</span> becomes a habit in Step 2. Tap <em>Break it →</em> or <em>Improve →</em> to pre-fill the 4-Laws form below. <span class="tag positive">+</span> entries become habits to reinforce — same flow.
+      <strong>Where the list goes:</strong> <span class="tag negative">−</span> entries become habits to <em>break</em> (inverse Laws), <span class="tag neutral">=</span> and <span class="tag positive">+</span> entries become habits to <em>grow</em> (4 Laws). Tap any button to pre-fill the design form below — the direction is chosen for you and can be flipped with the toggle.
     </div>
   </section>
 
   <!-- STEP 2: DESIGN -->
   <section class="wf-step" id="step-design" *ngIf="!isLoading">
     <div class="wf-step-header">
-      <span class="wf-badge">Step 2 · The Four Laws</span>
-      <h3>Design — Make it Obvious, Attractive, Easy, Satisfying</h3>
-      <p class="wf-hint">Each habit is the 4 Laws: <b>Cue</b> (obvious) + <b>Identity</b> (attractive) + <b>2-min version</b> (easy) + <b>Reward</b> (satisfying). Stack it after an existing habit → <em>After [CURRENT], I will [NEW]</em>.</p>
+      <span class="wf-badge">{{ draft.kind === 'break' ? 'Step 2 · Inverse Laws' : 'Step 2 · The Four Laws' }}</span>
+      <h3>{{ draft.kind === 'break' ? 'Design — Make it Invisible, Unattractive, Difficult, Unsatisfying' : 'Design — Make it Obvious, Attractive, Easy, Satisfying' }}</h3>
+      <p class="wf-hint" *ngIf="draft.kind !== 'break'">Each habit is the 4 Laws: <b>Cue</b> (obvious) + <b>Identity</b> (attractive) + <b>2-min version</b> (easy) + <b>Reward</b> (satisfying). Stack it after an existing habit → <em>After [CURRENT], I will [NEW]</em>.</p>
+      <p class="wf-hint" *ngIf="draft.kind === 'break'">Inverse laws (ch. 5): <b>Cue</b> → make it <em>invisible</em> (remove the trigger) + <b>Identity</b> → make it <em>unattractive</em> (name the cost) + <b>Friction</b> → make it <em>difficult</em> (20-second rule) + <b>Contract</b> → make it <em>unsatisfying</em> (someone is watching).</p>
     </div>
 
     <div class="wf-convert-banner" *ngIf="draftSource">
@@ -70,12 +71,21 @@
     </div>
 
     <form class="wf-form" (ngSubmit)="createHabit()">
+      <div class="kind-toggle" role="group" aria-label="Habit direction">
+        <button type="button" [class.active]="draft.kind === 'grow'" [attr.aria-pressed]="draft.kind === 'grow'" (click)="setKind('grow')">
+          Grow a good habit <small>4 Laws</small>
+        </button>
+        <button type="button" [class.active]="draft.kind === 'break'" [attr.aria-pressed]="draft.kind === 'break'" (click)="setKind('break')">
+          Break a bad habit <small>Inverse Laws</small>
+        </button>
+      </div>
+
       <div class="wf-grid">
-        <div class="field"><label for="wf-name">Habit name *</label><input id="wf-name" [(ngModel)]="draft.name" name="wfName" placeholder="e.g. Read 10 pages" required /></div>
-        <div class="field"><label for="wf-identity">Identity — Make it Attractive</label><input id="wf-identity" [(ngModel)]="draft.identity" name="wfIdentity" placeholder="I am a reader" /></div>
-        <div class="field"><label for="wf-mini">2-minute version — Make it Easy</label><input id="wf-mini" [(ngModel)]="draft.miniVersion" name="wfMini" placeholder="Read 1 page" /></div>
-        <div class="field"><label for="wf-cue">Cue — Make it Obvious</label><input id="wf-cue" [(ngModel)]="draft.cue" name="wfCue" placeholder="After breakfast" /></div>
-        <div class="field"><label for="wf-reward">Reward — Make it Satisfying</label><input id="wf-reward" [(ngModel)]="draft.reward" name="wfReward" placeholder="A coffee I enjoy" /></div>
+        <div class="field"><label for="wf-name">{{ draft.kind === 'break' ? 'Habit to break *' : 'Habit name *' }}</label><input id="wf-name" [(ngModel)]="draft.name" name="wfName" [placeholder]="draft.kind === 'break' ? 'e.g. Scrolling after waking' : 'e.g. Read 10 pages'" required /></div>
+        <div class="field"><label for="wf-identity">{{ draft.kind === 'break' ? 'Identity — Make it Unattractive' : 'Identity — Make it Attractive' }}</label><input id="wf-identity" [(ngModel)]="draft.identity" name="wfIdentity" [placeholder]="draft.kind === 'break' ? 'I am free from...' : 'I am a reader'" /></div>
+        <div class="field"><label for="wf-mini">{{ draft.kind === 'break' ? 'Friction — Make it Difficult (20-second rule)' : '2-minute version — Make it Easy' }}</label><input id="wf-mini" [(ngModel)]="draft.miniVersion" name="wfMini" [placeholder]="draft.kind === 'break' ? 'e.g. Leave the phone in another room' : 'Read 1 page'" /></div>
+        <div class="field"><label for="wf-cue">{{ draft.kind === 'break' ? 'Cue — Make it Invisible (remove it)' : 'Cue — Make it Obvious' }}</label><input id="wf-cue" [(ngModel)]="draft.cue" name="wfCue" [placeholder]="draft.kind === 'break' ? 'e.g. Delete the app from the home screen' : 'After breakfast'" /></div>
+        <div class="field"><label for="wf-reward">{{ draft.kind === 'break' ? 'Contract — Make it Unsatisfying (accountability)' : 'Reward — Make it Satisfying' }}</label><input id="wf-reward" [(ngModel)]="draft.reward" name="wfReward" [placeholder]="draft.kind === 'break' ? 'e.g. Pay $5 to my jar if I slip' : 'A coffee I enjoy'" /></div>
         <div class="field"><label for="wf-stack">Habit Stack — After...</label>
           <select id="wf-stack" [(ngModel)]="draft.stackedAfter" name="wfStack">
             <option value="">No stack</option>
@@ -84,7 +94,9 @@
         </div>
         <div class="field"><label for="wf-reminder">Reminder</label><input id="wf-reminder" type="time" [(ngModel)]="draft.reminderTime" name="wfReminder" /></div>
       </div>
-      <button type="submit" class="primary" [disabled]="isCreating || !draft.name.trim()">{{ isCreating ? 'Creating...' : (draftSource ? 'Create habit from scorecard →' : 'Create habit') }}</button>
+      <button type="submit" class="primary" [disabled]="isCreating || !draft.name.trim()">
+        {{ isCreating ? 'Creating...' : (draft.kind === 'break' ? 'Create habit to break →' : (draftSource ? 'Create habit from scorecard →' : 'Create habit')) }}
+      </button>
       <span class="success-message" *ngIf="createMsg" role="status" aria-live="polite">{{ createMsg }}</span>
     </form>
   </section>
@@ -100,14 +112,14 @@
     <div *ngIf="habits.length; else noHabits">
       <div class="wf-habit-row" *ngFor="let h of habits" [class.at-risk]="isAtRisk(h._id)">
         <div class="wf-habit-main">
-          <span class="wf-habit-name">{{ h.name }}</span>
-          <span class="wf-habit-meta" *ngIf="h.cue">Cue: {{ h.cue }}</span>
-          <span class="wf-habit-meta at-risk-label" *ngIf="isAtRisk(h._id)">⚠ Don't miss today — 2 misses breaks the chain</span>
+          <span class="wf-habit-name">{{ h.name }} <span class="wf-kind" *ngIf="isBreak(h)">BREAK</span></span>
+          <span class="wf-habit-meta" *ngIf="h.cue">{{ isBreak(h) ? 'Remove cue:' : 'Cue:' }} {{ h.cue }}</span>
+          <span class="wf-habit-meta at-risk-label" *ngIf="isAtRisk(h._id)">{{ isBreak(h) ? "⚠ You resisted yesterday - don't slip twice" : "⚠ Don't miss today — 2 misses breaks the chain" }}</span>
         </div>
         <div class="wf-habit-actions">
           <span class="wf-streak">{{ streaks[h._id]?.streak || 0 }} day streak</span>
           <button type="button" class="primary small" (click)="checkIn(h._id)" [disabled]="streaks[h._id]?.doneToday || checkingIds.has(h._id)">
-            {{ streaks[h._id]?.doneToday ? '✓ Done' : (checkingIds.has(h._id) ? '...' : 'Mark Done') }}
+            {{ streaks[h._id]?.doneToday ? (isBreak(h) ? '✓ Resisted' : '✓ Done') : (checkingIds.has(h._id) ? '...' : (isBreak(h) ? 'I resisted' : 'Mark Done')) }}
           </button>
         </div>
       </div>

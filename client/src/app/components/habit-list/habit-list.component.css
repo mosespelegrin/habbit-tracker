@@ -1,14 +1,26 @@
 /* habit-list.component.css */
 
 .habit-tracker {
-  max-width: 1000px;
-  margin: 0 auto 40px;
-  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto 32px;
+  padding: 28px;
   background: var(--card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow), var(--panel-edge);
   position: relative;
+}
+
+@media (min-width: 1024px) {
+  .habit-tracker {
+    padding: 32px;
+    backdrop-filter: blur(12px) saturate(130%);
+    -webkit-backdrop-filter: blur(12px) saturate(130%);
+  }
+  h2 {
+    font-size: 1.45rem;
+    letter-spacing: 0.02em;
+  }
 }
 
 :root[data-theme="light"] .habit-tracker {
@@ -246,6 +258,14 @@ h2 {
   border-radius: 4px;
 }
 
+.four-laws h4 {
+  margin: 16px 0 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
 .four-laws ul {
   list-style: none;
   margin: 12px 0 4px;
@@ -429,6 +449,27 @@ h2 {
   color: var(--text);
   font-size: 1rem;
   overflow-wrap: anywhere;
+}
+
+/* Direction badge: grow (teal) vs break (red) — the 4 Laws vs the inverse laws. */
+.kind-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  vertical-align: middle;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  border: 1px solid var(--primary-text);
+}
+
+.kind-badge.kind-break {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
 }
 
 .cue,

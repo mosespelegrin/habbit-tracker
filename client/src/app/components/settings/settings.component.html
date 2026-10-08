@@ -2,9 +2,12 @@
   <h2>Settings</h2>
 
   <section class="settings-section">
-    <h3>Account</h3>
-    <p class="account-email">{{ authService.email() }}</p>
-    <button type="button" class="danger" (click)="logout()">Log out</button>
+    <h3>Offline mode</h3>
+    <p class="panel-subtitle">
+      Atomic is fully offline: every habit, check-in, scorecard entry and review is stored on
+      this device only. No account, no login, no server - the app works in airplane mode.
+      Back up regularly with Export below.
+    </p>
   </section>
 
   <section class="settings-section">
@@ -79,41 +82,12 @@
     <p class="error" *ngIf="reminderError" role="alert">{{ reminderError }}</p>
   </section>
 
-  <section class="settings-section" *ngIf="isNative">
-    <h3>Server</h3>
-    <p class="panel-subtitle">
-      Where this app loads your data. Use your computer's address while testing on the same Wi-Fi
-      (e.g. http://192.168.1.100:3100), or your hosted server URL.
-    </p>
-
-    <div class="field server-field">
-      <label for="server-url">API address</label>
-      <input
-        id="server-url"
-        type="url"
-        name="server-url"
-        [(ngModel)]="serverUrl"
-        placeholder="http://192.168.1.100:3100"
-        autocomplete="off"
-        spellcheck="false"
-        (keydown.enter)="testServer()"
-      />
-    </div>
-
-    <div class="server-actions">
-      <button type="button" (click)="testServer()" [disabled]="isTestingServer">
-        {{ isTestingServer ? 'Testing...' : 'Test connection' }}
-      </button>
-      <button type="button" class="primary" (click)="saveServer()">Save &amp; reload</button>
-    </div>
-
-    <p class="success-message" *ngIf="serverStatus" role="status" aria-live="polite">{{ serverStatus }}</p>
-    <p class="error" *ngIf="serverError" role="alert">{{ serverError }}</p>
-  </section>
-
   <section class="settings-section">
     <h3>Backup</h3>
-    <p class="panel-subtitle">Export all your habits and check-in history, or restore from a previous export.</p>
+    <p class="panel-subtitle">
+      Your only copy lives on this device - export all habits, check-ins, scorecard entries and
+      weekly reviews to a JSON file, or restore from a previous export.
+    </p>
 
     <div class="backup-actions">
       <button type="button" (click)="exportData()" [disabled]="isExporting">
@@ -134,13 +108,13 @@
     <h3>Privacy &amp; data</h3>
     <p class="panel-subtitle">Plain-language notice of what this app stores and where.</p>
     <ul class="privacy-list">
-      <li><strong>What:</strong> your email, your habits, and your check-in history. Nothing else.</li>
-      <li><strong>Where:</strong> on the server shown in the Server section above - not on this device alone.</li>
-      <li><strong>Who can see it:</strong> only you, behind your password. Check-ins never contain personal details.</li>
+      <li><strong>What:</strong> your habits, check-ins, scorecard entries and weekly reviews. Nothing else.</li>
+      <li><strong>Where:</strong> on this device only, in the app's local storage. Nothing is ever uploaded.</li>
+      <li><strong>Who can see it:</strong> only you - there is no account and no server to log in to.</li>
       <li><strong>Tracking:</strong> none. No analytics, no ads, no third-party trackers, no marketing email.</li>
       <li>
         <strong>Your rights:</strong> export a full copy any time (Backup above), delete habits you no
-        longer want, or delete your account by removing your user from the server's database.
+        longer want, or clear everything by uninstalling the app.
       </li>
     </ul>
   </section>

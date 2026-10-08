@@ -1,32 +1,34 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { apiBaseUrl } from '../config/api';
+import { Observable, of, throwError } from 'rxjs';
+import { LocalStoreService } from './local-store.service';
+import type { WeeklyReview } from './local-store.service';
 
-export interface WeeklyReview {
-  weekStart: string;
-  wins: string;
-  misses: string;
-  tweak: string;
-}
+export type { WeeklyReview };
 
+const local = <T>(work: () => T): Observable<T> => {
+  try {
+    return of(work());
+  } catch (err: any) {
+    return throwError(() => ({ error: { message: err?.message || 'Something went wrong' } }));
+  }
+};
+
+/** Weekly wins / misses / one-tweak reviews - fully local, works offline. */
 @Injectable({
   providedIn: 'root'
 })
 export class WeeklyReviewService {
-  private apiBaseUrl = apiBaseUrl();
-  private url = `${this.apiBaseUrl}/weekly-reviews`;
+  constructor(private store: LocalStoreService) {}
 
-  constructor(private httpClient: HttpClient) { }
-
-  list() {
-    return this.httpClient.get<WeeklyReview[]>(this.url);
+  list(): Observable<WeeklyReview[]> {
+    return local(() => this.store.listReviews());
   }
 
-  get(weekStart: string) {
-    return this.httpClient.get<WeeklyReview>(`${this.url}/${weekStart}`);
+  get(weekStart: string): Observable<WeeklyReview> {
+    return local(() => this.store.getReview(weekStart));
   }
 
-  save(weekStart: string, review: Partial<WeeklyReview>) {
-    return this.httpClient.put<WeeklyReview>(`${this.url}/${weekStart}`, review);
+  save(weekStart: string, review: Partial<WeeklyReview>): Observable<WeeklyReview> {
+    return local(() => this.store.saveReview(weekStart, review));
   }
 }
