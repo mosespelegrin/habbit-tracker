@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from './services/auth.service';
+import { SyncService } from './services/sync.service';
 
 const QUOTES: string[] = [
   'You do not rise to the level of your goals. You fall to the level of your systems.',
@@ -23,7 +25,7 @@ export class AppComponent {
   quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
   darkMode = false;
 
-  constructor() {
+  constructor(public auth: AuthService, public sync: SyncService) {
     let saved: string | null = null;
     try {
       saved = localStorage.getItem('habitTrackerTheme');
@@ -34,6 +36,17 @@ export class AppComponent {
     // The violet "system" look is dark-first, so dark is the default until the user picks otherwise.
     this.darkMode = saved ? saved === 'dark' : true;
     this.applyTheme();
+  }
+
+  /** Compact label for the topbar sync pill (only shown while signed in). */
+  statusText(): string {
+    switch (this.sync.status()) {
+      case 'syncing': return 'Syncing';
+      case 'synced': return 'Synced';
+      case 'offline': return 'Offline';
+      case 'error': return 'Sync issue';
+      default: return '';
+    }
   }
 
   toggleTheme() {

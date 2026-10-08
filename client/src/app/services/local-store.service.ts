@@ -24,6 +24,7 @@ export interface Habit {
   reminderTime: string;
   kind: HabitKind;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CheckIn {
@@ -31,6 +32,7 @@ export interface CheckIn {
   habit: string;
   date: string;
   done: boolean;
+  updatedAt: string;
 }
 
 export interface ScorecardEntry {
@@ -38,6 +40,7 @@ export interface ScorecardEntry {
   text: string;
   rating: ScorecardRating;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface WeeklyReview {
@@ -45,6 +48,7 @@ export interface WeeklyReview {
   wins: string;
   misses: string;
   tweak: string;
+  updatedAt: string;
 }
 
 export interface StreakInfo {
@@ -79,11 +83,19 @@ interface Database {
   checkins: CheckIn[];
   scorecard: ScorecardEntry[];
   reviews: WeeklyReview[];
+  /** Ids deleted since the last acknowledged sync (tombstones), so the server can follow suit. */
+  deleted: { habits: string[]; scorecard: string[] };
 }
 
 const STORAGE_KEY = 'atomicOfflineDb.v1';
 
-const emptyDb = (): Database => ({ habits: [], checkins: [], scorecard: [], reviews: [] });
+const emptyDb = (): Database => ({
+  habits: [],
+  checkins: [],
+  scorecard: [],
+  reviews: [],
+  deleted: { habits: [], scorecard: [] }
+});
 
 // --- Local-calendar date helpers -------------------------------------------
 
@@ -149,11 +161,23 @@ export class LocalStoreService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return emptyDb();
       const parsed = JSON.parse(raw);
+      const now = new Date().toISOString();
+
+      // Backfill `updatedAt` for databases written before sync existed, so LWW comparisons work.
+      const stamp = <T extends { createdAt?: string; updatedAt?: string }>(record: T): T => {
+        if (!record.updatedAt) record.updatedAt = record.createdAt || now;
+        return record;
+      };
+
       return {
-        habits: Array.isArray(parsed?.habits) ? parsed.habits : [],
-        checkins: Array.isArray(parsed?.checkins) ? parsed.checkins : [],
-        scorecard: Array.isArray(parsed?.scorecard) ? parsed.scorecard : [],
-        reviews: Array.isArray(parsed?.reviews) ? parsed.reviews : []
+        habits: (Array.isArray(parsed?.habits) ? parsed.habits : []).map(stamp),
+        checkins: (Array.isArray(parsed?.checkins) ? parsed.checkins : []).map(stamp),
+        scorecard: (Array.isArray(parsed?.scorecard) ? parsed.scorecard : []).map(stamp),
+        reviews: (Array.isArray(parsed?.reviews) ? parsed.reviews : []).map(stamp),
+        deleted: {
+          habits: Array.isArray(parsed?.deleted?.habits) ? parsed.deleted.habits : [],
+          scorecard: Array.isArray(parsed?.deleted?.scorecard) ? parsed.deleted.scorecard : []
+        }
       };
     } catch {
       // localStorage unavailable or corrupt - run from memory so the UI still works.
@@ -181,10 +205,12 @@ export class LocalStoreService {
       throw new Error('stackedAfter habit not found');
     }
 
+    const now = new Date().toISOString();
     const record: Habit = {
       ...habit,
       _id: newId(),
-      createdAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
     };
     this.db.habits.push(record);
     this.save();
@@ -202,7 +228,7 @@ export class LocalStoreService {
       throw new Error('stackedAfter habit not found');
     }
 
-    const updated: Habit = { ...this.db.habits[index], ...habit, _id: id };
+    const updated: Habit = { ...this.db.habits[index], ...habit, _id: id, updatedAt: new Date().toISOString() };
     this.db.habits[index] = updated;
     this.save();
     return updated;
@@ -214,6 +240,8 @@ export class LocalStoreService {
 
     const [removed] = this.db.habits.splice(index, 1);
     this.db.checkins = this.db.checkins.filter((c) => c.habit !== id);
+    // Tombstone: the next sync deletes it on the server too (cascade covers its check-ins).
+    if (!this.db.deleted.habits.includes(id)) this.db.deleted.habits.push(id);
     this.save();
     return removed;
   }
@@ -270,11 +298,13 @@ export class LocalStoreService {
     );
     if (alreadyDone) throw new Error('Check-in already exists for this habit today');
 
+    const now = new Date().toISOString();
     const record: CheckIn = {
       _id: newId(),
       habit: habitId,
-      date: new Date().toISOString(),
-      done: true
+      date: now,
+      done: true,
+      updatedAt: now
     };
     this.db.checkins.push(record);
     this.save();
@@ -429,7 +459,8 @@ export class LocalStoreService {
       _id: newId(),
       text: trimmed,
       rating,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     this.db.scorecard.push(entry);
     this.save();
@@ -440,6 +471,8 @@ export class LocalStoreService {
     const index = this.db.scorecard.findIndex((entry) => entry._id === id);
     if (index === -1) throw new Error('Entry not found');
     const [removed] = this.db.scorecard.splice(index, 1);
+    // Tombstone: the next sync deletes it on the server too.
+    if (!this.db.deleted.scorecard.includes(id)) this.db.deleted.scorecard.push(id);
     this.save();
     return removed;
   }
@@ -456,7 +489,8 @@ export class LocalStoreService {
         weekStart,
         wins: '',
         misses: '',
-        tweak: ''
+        tweak: '',
+        updatedAt: ''
       }
     );
   }
@@ -469,7 +503,8 @@ export class LocalStoreService {
       weekStart,
       wins: String(review.wins ?? existing?.wins ?? '').trim(),
       misses: String(review.misses ?? existing?.misses ?? '').trim(),
-      tweak: String(review.tweak ?? existing?.tweak ?? '').trim()
+      tweak: String(review.tweak ?? existing?.tweak ?? '').trim(),
+      updatedAt: new Date().toISOString()
     };
 
     if (existing) {
@@ -489,6 +524,7 @@ export class LocalStoreService {
       checkins: [...this.db.checkins],
       scorecard: this.listScorecard(),
       reviews: this.listReviews(),
+      deleted: { habits: [...this.db.deleted.habits], scorecard: [...this.db.deleted.scorecard] },
       exportedAt: new Date().toISOString()
     };
   }
@@ -505,23 +541,23 @@ export class LocalStoreService {
     let importedReviews = 0;
 
     (payload?.habits || []).forEach((raw) => {
-      if (!raw || typeof raw._id !== 'string' || !this.db.habits.some((h) => h._id === raw._id)) {
-        if (raw && typeof raw._id === 'string') {
-          this.db.habits.push({
-            name: String(raw.name || '').trim() || 'Untitled habit',
-            identity: String(raw.identity || ''),
-            miniVersion: String(raw.miniVersion || ''),
-            cue: String(raw.cue || ''),
-            reward: String(raw.reward || ''),
-            stackedAfter: typeof raw.stackedAfter === 'string' ? raw.stackedAfter : null,
-            reminderTime: REMINDER_RE.test(raw.reminderTime || '') ? raw.reminderTime : '',
-            kind: raw.kind === 'break' ? 'break' : 'grow',
-            _id: raw._id,
-            createdAt: raw.createdAt || new Date().toISOString()
-          });
-          importedHabits++;
-        }
-      }
+      if (!raw || typeof raw._id !== 'string' || this.db.habits.some((h) => h._id === raw._id)) return;
+      this.db.habits.push({
+        name: String(raw.name || '').trim() || 'Untitled habit',
+        identity: String(raw.identity || ''),
+        miniVersion: String(raw.miniVersion || ''),
+        cue: String(raw.cue || ''),
+        reward: String(raw.reward || ''),
+        stackedAfter: typeof raw.stackedAfter === 'string' ? raw.stackedAfter : null,
+        reminderTime: REMINDER_RE.test(raw.reminderTime || '') ? raw.reminderTime : '',
+        kind: raw.kind === 'break' ? 'break' : 'grow',
+        _id: raw._id,
+        createdAt: raw.createdAt || new Date().toISOString(),
+        updatedAt: raw.updatedAt || raw.createdAt || new Date().toISOString()
+      });
+      // Re-importing an id that was deleted earlier cancels its pending tombstone.
+      this.db.deleted.habits = this.db.deleted.habits.filter((id) => id !== raw._id);
+      importedHabits++;
     });
 
     (payload?.checkins || []).forEach((raw) => {
@@ -536,7 +572,8 @@ export class LocalStoreService {
         _id: typeof raw._id === 'string' ? raw._id : newId(),
         habit: raw.habit,
         date: new Date(raw.date).toISOString(),
-        done: raw.done !== false
+        done: raw.done !== false,
+        updatedAt: raw.updatedAt || new Date(raw.date).toISOString()
       });
       importedCheckins++;
     });
@@ -548,8 +585,10 @@ export class LocalStoreService {
         _id: raw._id,
         text: String(raw.text || ''),
         rating: raw.rating,
-        createdAt: raw.createdAt || new Date().toISOString()
+        createdAt: raw.createdAt || new Date().toISOString(),
+        updatedAt: raw.updatedAt || raw.createdAt || new Date().toISOString()
       });
+      this.db.deleted.scorecard = this.db.deleted.scorecard.filter((id) => id !== raw._id);
       importedScorecard++;
     });
 
@@ -560,12 +599,133 @@ export class LocalStoreService {
         weekStart: raw.weekStart,
         wins: String(raw.wins || ''),
         misses: String(raw.misses || ''),
-        tweak: String(raw.tweak || '')
+        tweak: String(raw.tweak || ''),
+        updatedAt: raw.updatedAt || new Date().toISOString()
       });
       importedReviews++;
     });
 
     this.save();
     return { importedHabits, importedCheckins, importedScorecard, importedReviews };
+  }
+
+  // --- Offline-first sync ---------------------------------------------------
+  // The store never talks to the network itself; SyncService hands it the server's
+  // response and it merges with last-writer-wins per record, keyed by _id.
+
+  /** Deletions made locally that the server has not acknowledged yet. */
+  pendingDeletions(): { habits: string[]; scorecard: string[] } {
+    return { habits: [...this.db.deleted.habits], scorecard: [...this.db.deleted.scorecard] };
+  }
+
+  /** Drops exactly the tombstones the server acknowledged (ones made mid-sync survive). */
+  clearTombstones(sent: { habits?: string[]; scorecard?: string[] }): void {
+    this.db.deleted.habits = this.db.deleted.habits.filter((id) => !sent?.habits?.includes(id));
+    this.db.deleted.scorecard = this.db.deleted.scorecard.filter((id) => !sent?.scorecard?.includes(id));
+    this.save();
+  }
+
+  /**
+   * Merges the authoritative dataset returned by POST /api/sync.
+   * Incoming records win only when their `updatedAt` is newer than the local copy;
+   * unknown ids are added. Returns how many local records were created or replaced.
+   */
+  mergeServerResponse(incoming: {
+    habits?: any[];
+    checkins?: any[];
+    scorecard?: any[];
+    reviews?: any[];
+  }): { habits: number; checkins: number; scorecard: number; reviews: number } {
+    const counts = { habits: 0, checkins: 0, scorecard: 0, reviews: 0 };
+    const now = new Date().toISOString();
+    const time = (value?: string) => new Date(value || 0).getTime();
+    const newer = (incomingAt?: string, localAt?: string) => time(incomingAt) > time(localAt);
+    const tombstonedHabits = new Set(this.db.deleted.habits);
+    const tombstonedEntries = new Set(this.db.deleted.scorecard);
+
+    (incoming.habits || []).forEach((raw) => {
+      if (!raw || typeof raw._id !== 'string' || tombstonedHabits.has(raw._id)) return;
+      if (typeof raw.name !== 'string' || !raw.name.trim()) return;
+      const record: Habit = {
+        _id: raw._id,
+        name: raw.name.trim().slice(0, 120),
+        identity: String(raw.identity || '').slice(0, 240),
+        miniVersion: String(raw.miniVersion || '').slice(0, 120),
+        cue: String(raw.cue || '').slice(0, 160),
+        reward: String(raw.reward || '').slice(0, 160),
+        stackedAfter: typeof raw.stackedAfter === 'string' ? raw.stackedAfter : null,
+        reminderTime: REMINDER_RE.test(raw.reminderTime || '') ? raw.reminderTime : '',
+        kind: raw.kind === 'break' ? 'break' : 'grow',
+        createdAt: String(raw.createdAt || now),
+        updatedAt: String(raw.updatedAt || raw.createdAt || now)
+      };
+      const index = this.db.habits.findIndex((habit) => habit._id === record._id);
+      if (index === -1) {
+        this.db.habits.push(record);
+        counts.habits++;
+      } else if (newer(record.updatedAt, this.db.habits[index].updatedAt)) {
+        this.db.habits[index] = record;
+        counts.habits++;
+      }
+    });
+
+    (incoming.checkins || []).forEach((raw) => {
+      if (!raw || typeof raw._id !== 'string' || typeof raw.habit !== 'string' || !raw.date) return;
+      if (this.db.checkins.some((checkin) => checkin._id === raw._id)) return;
+      const date = new Date(raw.date);
+      if (Number.isNaN(date.getTime())) return;
+      if (!this.db.habits.some((habit) => habit._id === raw.habit)) return;
+      this.db.checkins.push({
+        _id: raw._id,
+        habit: raw.habit,
+        date: date.toISOString(),
+        done: raw.done !== false,
+        updatedAt: String(raw.updatedAt || date.toISOString())
+      });
+      counts.checkins++;
+    });
+
+    (incoming.scorecard || []).forEach((raw) => {
+      if (!raw || typeof raw._id !== 'string' || tombstonedEntries.has(raw._id)) return;
+      if (typeof raw.text !== 'string' || !raw.text.trim()) return;
+      if (!RATING_VALUES.includes(raw.rating)) return;
+      const record: ScorecardEntry = {
+        _id: raw._id,
+        text: raw.text.trim().slice(0, 160),
+        rating: raw.rating,
+        createdAt: String(raw.createdAt || now),
+        updatedAt: String(raw.updatedAt || raw.createdAt || now)
+      };
+      const index = this.db.scorecard.findIndex((entry) => entry._id === record._id);
+      if (index === -1) {
+        this.db.scorecard.push(record);
+        counts.scorecard++;
+      } else if (newer(record.updatedAt, this.db.scorecard[index].updatedAt)) {
+        this.db.scorecard[index] = record;
+        counts.scorecard++;
+      }
+    });
+
+    (incoming.reviews || []).forEach((raw) => {
+      if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw.weekStart || '')) return;
+      const record: WeeklyReview = {
+        weekStart: raw.weekStart,
+        wins: String(raw.wins || '').slice(0, 1000),
+        misses: String(raw.misses || '').slice(0, 1000),
+        tweak: String(raw.tweak || '').slice(0, 1000),
+        updatedAt: String(raw.updatedAt || now)
+      };
+      const index = this.db.reviews.findIndex((review) => review.weekStart === record.weekStart);
+      if (index === -1) {
+        this.db.reviews.push(record);
+        counts.reviews++;
+      } else if (newer(record.updatedAt, this.db.reviews[index].updatedAt)) {
+        this.db.reviews[index] = record;
+        counts.reviews++;
+      }
+    });
+
+    this.save();
+    return counts;
   }
 }

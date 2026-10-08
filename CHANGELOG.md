@@ -7,6 +7,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Optional cloud sync (MongoDB)**: the app stays offline-first, but signing in under
+  Settings → Cloud sync mirrors every habit, check-in, scorecard entry and weekly review to the
+  server so the Render website and the Android app share one dataset. A single round trip to the new
+  `POST /api/sync` (whole dataset + deletion tombstones, **last-writer-wins** on `updatedAt`,
+  idempotent retries) pushes local changes and pulls the authoritative merge; sync triggers on app
+  start, reconnect, tab focus, debounced local edits and a manual "Sync now". Adds `SyncService`,
+  the auth interceptor (401 just drops the session - no login gates), a topbar sync pill
+  (Synced / Syncing / Offline / Sync issue), `updatedAt` stamps + deletion tombstones in
+  `LocalStoreService`, server-side persistence of `kind`, a native sync-server field in Settings,
+  and 6 new merge/tombstone specs (19 Karma specs total).
 - **Pure offline mode**: all data now lives on the device in `LocalStoreService`
   (localStorage) - no login, no account, no server. Streak/history/trend/stack math from the API was
   reimplemented locally, so the app works in airplane mode; the login/register screens, auth guard,

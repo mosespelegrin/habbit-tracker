@@ -1,12 +1,12 @@
 # Atomic — Habit Streak Tracker
 
-A habit tracker built around James Clear's *Atomic Habits*: identity-based habits, the Four Laws of Behavior Change (cue, craving, response, reward), habit stacking, streaks, a habit scorecard, weekly reviews, and a completion trend chart - **now fully offline**: every feature runs on-device with no account, no login and no server.
+A habit tracker built around James Clear's *Atomic Habits*: identity-based habits, the Four Laws of Behavior Change (cue, craving, response, reward), habit stacking, streaks, a habit scorecard, weekly reviews, and a completion trend chart - **offline-first with optional cloud sync**: every feature runs on-device with no account and no login, and (if you sign in) your data also mirrors to MongoDB whenever you're online, so the website and the phone app stay in step.
 
 ## Stack
 
-- **Client**: Angular 17 (standalone components, signals) + [Capacitor](https://capacitorjs.com/) for the native Android app
-- **Data**: 100% on-device (localStorage-backed `LocalStoreService`) - no network required, airplane-mode compatible
-- **Server (optional/legacy)**: Node.js + Express 5 + Mongoose 9 (MongoDB) - kept in the repo for the old API deployment; the app no longer calls it
+- **Client**: Angular 18 (standalone components, signals) + [Capacitor](https://capacitorjs.com/) for the native Android app
+- **Data**: offline-first - 100% local (localStorage-backed `LocalStoreService`), airplane-mode compatible; optional cloud mirror to MongoDB via sync when online
+- **Server (sync backend)**: Node.js + Express 5 + Mongoose 9 (MongoDB) - one round-trip `POST /api/sync` merges the client's records (last-writer-wins) and serves the web build; the app never waits on it
 - **Reminders**: local notifications on the device (`@capacitor/local-notifications`)
 
 ## Features
@@ -14,8 +14,11 @@ A habit tracker built around James Clear's *Atomic Habits*: identity-based habit
 - **Grow or break**: every habit has a direction - *grow* uses the 4 Laws (cue, identity, 2-minute
   version, reward), *break* uses the inverse laws of ch. 5 (remove the cue, unattractive identity,
   20-second friction, an accountability contract); the Habits page labels and verbs switch accordingly
-- **Pure offline**: no login, no server - habits, check-ins, scorecard and reviews live in this
-  device's local storage (Settings → Offline mode)
+- **Offline-first**: habits, check-ins, scorecard and reviews live in this device's local storage
+  (Settings → Offline-first) and never wait on the network
+- **Optional cloud sync (MongoDB)**: sign in once in Settings and every change syncs in the
+  background when online - offline edits are queued and merge on the next connection
+  (last-writer-wins, deletion tombstones, idempotent retries)
 - Identity, cue, 2-minute version, reward, and habit stacking per habit (the Four Laws)
 - Daily check-ins, current streak, personal-best streak, and a 90-day heatmap
 - Habit Scorecard (rate your everyday habits +/−/=, from ch. 1 of the book)
@@ -45,8 +48,9 @@ server/              Express API (listens on :3000 by default)
 
 ## Local development
 
-> The client itself needs no server - it is pure offline. The server below is only needed if you are
-> working on the legacy API (`server/`, also what Render deploys).
+> The client works fully offline with no server at all. The server is only involved when you opt in
+> to **cloud sync** (Settings → Cloud sync): it authenticates you and merges your data to MongoDB.
+> Running it locally is also how Render deploys are mirrored.
 
 ### Prerequisites
 
@@ -100,21 +104,23 @@ on port 4200, `/api` on the same origin when hosted, and `API_ORIGIN` for the na
 ### 3. Try it
 
 1. Open `http://localhost:4200`
-2. Register an account (password must satisfy the policy shown on the form)
+2. Use the app directly - or optionally create an account (Settings → Cloud sync) to mirror everything
+   to MongoDB and share it between the web build and your phone
 3. Add a habit, check it off, explore Scorecard / Weekly Review / Trends / Settings
 
 ## Mobile app (Capacitor)
 
 The app is wrapped with Capacitor, the toolchain Angular's own mobile guides point at for turning a web
 app into a native one. The Angular build is bundled *inside* the app, and **all data is stored on the
-device** - there is no API configuration step anymore; the app works out of the box, including in
-airplane mode.
+device first** - the app works out of the box, including in airplane mode, with no API configuration.
 
 ### One-time configuration
 
-None. Older versions pointed the app at a server URL (Settings → Server); that section is gone. If you
-have data from the old cloud version, export it as JSON on the old install and import it under
-**Settings → Backup** on the new one.
+None required. Everything is offline-first by default. If you want to **cloud sync**, open
+**Settings → Cloud sync**, create an account, and (on the phone only) confirm the sync server URL - it
+defaults to the hosted Render service. Older versions pointed at a server URL under Settings → Server;
+that section is gone. If you have data from the old cloud version, export it as JSON on the old install
+and import it under **Settings → Backup** on the new one (or just sign in and let sync pull it down).
 
 ### Build it
 

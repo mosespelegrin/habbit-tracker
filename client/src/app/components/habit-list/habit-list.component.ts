@@ -1,7 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HabitService } from '../../services/habit.service';
+import { SyncService } from '../../services/sync.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 interface StreakInfo {
@@ -145,10 +147,12 @@ export class HabitListComponent implements OnInit, OnDestroy {
   pendingDeleteId: string | null = null;
   private pendingDeleteTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private habitService: HabitService) { }
+  constructor(private habitService: HabitService, private sync: SyncService, private destroyRef: DestroyRef) { }
 
   ngOnInit() {
     this.loadHabits();
+    // A background sync can land records from another device (or the web build) - refresh when it does.
+    this.sync.merged.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadHabits());
   }
 
   loadHabits() {

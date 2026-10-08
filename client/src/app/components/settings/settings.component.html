@@ -2,12 +2,117 @@
   <h2>Settings</h2>
 
   <section class="settings-section">
-    <h3>Offline mode</h3>
+    <h3>Offline-first</h3>
     <p class="panel-subtitle">
-      Atomic is fully offline: every habit, check-in, scorecard entry and review is stored on
-      this device only. No account, no login, no server - the app works in airplane mode.
-      Back up regularly with Export below.
+      Atomic works in airplane mode: every habit, check-in, scorecard entry and review is stored
+      on this device first and never waits on the network. Optionally sign in below to mirror your
+      data to your account in the cloud (MongoDB) whenever you're online - both web and phone
+      then stay in step. Back up any time with Export below.
     </p>
+  </section>
+
+  <section class="settings-section">
+    <h3>Cloud sync</h3>
+    <p class="panel-subtitle">
+      Optional. Syncs in the background when online; offline, everything keeps working locally
+      and the next connection catches up on its own.
+    </p>
+
+    <ng-container *ngIf="!auth.isAuthenticated(); else signedInBlock">
+      <div class="sync-auth-toggle">
+        <button
+          type="button"
+          [class.primary]="authMode === 'signin'"
+          (click)="authMode = 'signin'; authError = null"
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          [class.primary]="authMode === 'register'"
+          (click)="authMode = 'register'; authError = null"
+        >
+          Create account
+        </button>
+      </div>
+
+      <form class="sync-form" (ngSubmit)="submitAuth()">
+        <label class="sr-only" for="syncEmail">Email</label>
+        <input
+          id="syncEmail"
+          name="syncEmail"
+          type="email"
+          placeholder="Email"
+          autocomplete="email"
+          [(ngModel)]="authEmail"
+        />
+        <label class="sr-only" for="syncPassword">Password</label>
+        <input
+          id="syncPassword"
+          name="syncPassword"
+          type="password"
+          placeholder="Password"
+          [attr.autocomplete]="authMode === 'signin' ? 'current-password' : 'new-password'"
+          [(ngModel)]="authPassword"
+        />
+        <p class="hint" *ngIf="authMode === 'register'">
+          Passwords need 12+ characters including upper and lower case, a number and a symbol.
+        </p>
+        <button type="submit" class="primary" [disabled]="authBusy">
+          {{ authBusy ? 'Working...' : authMode === 'signin' ? 'Sign in & sync' : 'Create account' }}
+        </button>
+      </form>
+
+      <p class="error" *ngIf="authError" role="alert">{{ authError }}</p>
+      <p class="hint">No account needed - without one your data simply stays on this device.</p>
+    </ng-container>
+
+    <ng-template #signedInBlock>
+      <p class="about-line">Signed in as <strong>{{ auth.email() }}</strong></p>
+      <p
+        class="permission-status"
+        [class.is-granted]="sync.status() === 'synced'"
+        [class.is-blocked]="sync.status() === 'error'"
+        role="status"
+      >
+        Sync status: <strong>{{ statusLabel() }}</strong>
+      </p>
+      <p class="hint" *ngIf="sync.lastSyncedAt()">
+        Last synced: {{ sync.lastSyncedAt() | date: 'medium' }}
+      </p>
+
+      <div class="backup-actions">
+        <button
+          type="button"
+          class="primary"
+          (click)="sync.syncNow()"
+          [disabled]="sync.status() === 'syncing'"
+        >
+          {{ sync.status() === 'syncing' ? 'Syncing...' : 'Sync now' }}
+        </button>
+        <button type="button" (click)="signOut()">Sign out</button>
+      </div>
+
+      <p class="error" *ngIf="sync.status() === 'error' && sync.lastError()" role="alert">
+        {{ sync.lastError() }}
+      </p>
+      <p class="hint" *ngIf="sync.status() === 'offline'">We'll sync automatically when you're back online.</p>
+    </ng-template>
+
+    <!-- The native app loads from disk, so it needs to be told where the API lives. -->
+    <div class="server-field" *ngIf="isNative">
+      <label for="serverUrl">Sync server</label>
+      <div class="backup-actions">
+        <input
+          id="serverUrl"
+          name="serverUrl"
+          type="url"
+          placeholder="https://atomic-habit-tracker.onrender.com"
+          [(ngModel)]="apiOriginDraft"
+        />
+        <button type="button" (click)="saveApiOrigin()">Save &amp; reload</button>
+      </div>
+    </div>
   </section>
 
   <section class="settings-section">
@@ -85,8 +190,8 @@
   <section class="settings-section">
     <h3>Backup</h3>
     <p class="panel-subtitle">
-      Your only copy lives on this device - export all habits, check-ins, scorecard entries and
-      weekly reviews to a JSON file, or restore from a previous export.
+      Export all habits, check-ins, scorecard entries and weekly reviews to a JSON file, or
+      restore from a previous export - a file backup is the safest safety net alongside sync.
     </p>
 
     <div class="backup-actions">
@@ -109,8 +214,12 @@
     <p class="panel-subtitle">Plain-language notice of what this app stores and where.</p>
     <ul class="privacy-list">
       <li><strong>What:</strong> your habits, check-ins, scorecard entries and weekly reviews. Nothing else.</li>
-      <li><strong>Where:</strong> on this device only, in the app's local storage. Nothing is ever uploaded.</li>
-      <li><strong>Who can see it:</strong> only you - there is no account and no server to log in to.</li>
+      <li>
+        <strong>Where:</strong> always on this device, in the app's local storage. Only if you sign
+        in for sync is a copy also stored in your own account (MongoDB) - sign out removes the
+        session, and the local copy stays yours.
+      </li>
+      <li><strong>Who can see it:</strong> only you - the cloud copy lives behind your account credentials.</li>
       <li><strong>Tracking:</strong> none. No analytics, no ads, no third-party trackers, no marketing email.</li>
       <li>
         <strong>Your rights:</strong> export a full copy any time (Backup above), delete habits you no

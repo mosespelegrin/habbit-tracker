@@ -99,6 +99,8 @@ app.use((req,res,next)=>{
 
 // Data import/export carries a full backup, so it gets a larger body limit than the rest of the API.
 app.use("/api/data",express.json({limit:"5mb"}));
+// Sync pushes the client's whole dataset (check-in heavy), so it needs the same headroom.
+app.use("/api/sync",express.json({limit:"5mb"}));
 app.use(express.json({limit:"256kb"}));
 
 app.use((req,res,next)=>{
@@ -118,6 +120,7 @@ app.use("/api/scorecard",require("./routes/scorecard.js"));
 app.use("/api/weekly-reviews",require("./routes/weeklyReview.js"));
 app.use("/api/push",require("./routes/push.js"));
 app.use("/api/data",require("./routes/data.js"));
+app.use("/api/sync",require("./routes/sync.js"));
 
 // Unknown API paths get a JSON 404 instead of falling through to the SPA's index.html.
 app.use("/api",(req,res)=>{

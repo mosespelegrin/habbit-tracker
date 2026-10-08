@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, tap } from 'rxjs';
 import { LocalStoreService } from './local-store.service';
 import type { WeeklyReview } from './local-store.service';
+import { SyncService } from './sync.service';
 
 export type { WeeklyReview };
 
@@ -13,12 +14,12 @@ const local = <T>(work: () => T): Observable<T> => {
   }
 };
 
-/** Weekly wins / misses / one-tweak reviews - fully local, works offline. */
+/** Weekly wins / misses / one-tweak reviews - fully local, works offline; saves sync in the background. */
 @Injectable({
   providedIn: 'root'
 })
 export class WeeklyReviewService {
-  constructor(private store: LocalStoreService) {}
+  constructor(private store: LocalStoreService, private sync: SyncService) {}
 
   list(): Observable<WeeklyReview[]> {
     return local(() => this.store.listReviews());
@@ -29,6 +30,8 @@ export class WeeklyReviewService {
   }
 
   save(weekStart: string, review: Partial<WeeklyReview>): Observable<WeeklyReview> {
-    return local(() => this.store.saveReview(weekStart, review));
+    return local(() => this.store.saveReview(weekStart, review)).pipe(
+      tap(() => this.sync.notifyChange())
+    );
   }
 }

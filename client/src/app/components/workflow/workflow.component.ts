@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HabitService } from '../../services/habit.service';
 import { ScorecardService, ScorecardEntry } from '../../services/scorecard.service';
 import { WeeklyReviewService, WeeklyReview } from '../../services/weekly-review.service';
+import { SyncService } from '../../services/sync.service';
 
 @Component({
   selector: 'app-workflow',
@@ -41,12 +43,16 @@ export class WorkflowComponent implements OnInit {
     private habitService: HabitService,
     private scorecardService: ScorecardService,
     private reviewService: WeeklyReviewService,
-    private router: Router
+    private router: Router,
+    private sync: SyncService,
+    private destroyRef: DestroyRef
   ) {}
 
   ngOnInit() {
     this.currentWeekStart = this.getWeekStart(new Date());
     this.loadAll();
+    // Re-read everything when a background sync merges in data from another device.
+    this.sync.merged.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.loadAll());
   }
 
   loadAll() {

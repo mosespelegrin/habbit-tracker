@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ScorecardService, ScorecardEntry, ScorecardRating } from '../../services/scorecard.service';
+import { SyncService } from '../../services/sync.service';
 
 @Component({
   selector: 'app-scorecard',
@@ -18,10 +20,12 @@ export class ScorecardComponent implements OnInit {
   isAdding = false;
   error: string | null = null;
 
-  constructor(private scorecardService: ScorecardService) { }
+  constructor(private scorecardService: ScorecardService, private sync: SyncService, private destroyRef: DestroyRef) { }
 
   ngOnInit() {
     this.load();
+    // Refresh the list when a background sync merges in entries from another device.
+    this.sync.merged.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
 
   load() {

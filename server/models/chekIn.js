@@ -12,6 +12,10 @@ const checkInSchema=new mongoose.Schema({
     done:{
         type:Boolean,
         default:false
+    },
+    updatedAt:{
+        type:Date,
+        default:Date.now
     }
 
 });

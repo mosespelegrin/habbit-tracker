@@ -5,6 +5,9 @@ import { Capacitor } from '@capacitor/core';
 import { ReminderService } from '../../services/reminder.service';
 import { HabitService } from '../../services/habit.service';
 import { DataService } from '../../services/data.service';
+import { AuthService } from '../../services/auth.service';
+import { SyncService } from '../../services/sync.service';
+import { getApiOrigin, setApiOrigin } from '../../config/api';
 
 @Component({
   selector: 'app-settings',
@@ -24,11 +27,70 @@ export class SettingsComponent {
   importMessage: string | null = null;
   dataError: string | null = null;
 
+  // --- Cloud sync (optional; the app is offline-first either way) -----------
+  authMode: 'signin' | 'register' = 'signin';
+  authEmail = '';
+  authPassword = '';
+  authBusy = false;
+  authError: string | null = null;
+  apiOriginDraft = getApiOrigin();
+
   constructor(
     public reminderService: ReminderService,
     private habitService: HabitService,
-    private dataService: DataService
+    private dataService: DataService,
+    public auth: AuthService,
+    public sync: SyncService
   ) {}
+
+  get isNative(): boolean {
+    return Capacitor.isNativePlatform();
+  }
+
+  async submitAuth() {
+    if (!this.authEmail.trim() || !this.authPassword) {
+      this.authError = 'Email and password are required';
+      return;
+    }
+
+    this.authBusy = true;
+    this.authError = null;
+    try {
+      if (this.authMode === 'signin') {
+        await this.sync.signIn(this.authEmail.trim(), this.authPassword);
+      } else {
+        await this.sync.register(this.authEmail.trim(), this.authPassword);
+      }
+      this.authPassword = '';
+    } catch (err: any) {
+      this.authError =
+        err?.error?.message ||
+        (err?.status === 0 ? 'Could not reach the server - check your connection' : 'Something went wrong');
+    } finally {
+      this.authBusy = false;
+    }
+  }
+
+  signOut() {
+    this.sync.signOut();
+  }
+
+  /** Short status line for the sync section. */
+  statusLabel(): string {
+    switch (this.sync.status()) {
+      case 'syncing': return 'Syncing...';
+      case 'synced': return 'Up to date';
+      case 'offline': return 'Offline - changes are saved on this device';
+      case 'error': return 'Sync issue - your data is safe locally';
+      default: return 'Not signed in - data stays on this device';
+    }
+  }
+
+  /** Native builds point at a server explicitly; the web build uses its own origin. */
+  saveApiOrigin() {
+    setApiOrigin(this.apiOriginDraft);
+    window.location.reload();
+  }
 
   /**
    * Just-in-time consent (MD A2): the first tap never triggers the system dialog - it opens the

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, tap } from 'rxjs';
 import { LocalStoreService } from './local-store.service';
+import { SyncService } from './sync.service';
 
 const local = <T>(work: () => T): Observable<T> => {
   try {
@@ -13,12 +14,13 @@ const local = <T>(work: () => T): Observable<T> => {
 /**
  * Backup export/import - reads and writes the local store directly, so a backup contains
  * everything the app knows: habits, check-ins, the scorecard and weekly reviews.
+ * An import also pushes the restored data up to the server on the next sync.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  constructor(private store: LocalStoreService) {}
+  constructor(private store: LocalStoreService, private sync: SyncService) {}
 
   exportData(): Observable<any> {
     return local(() => this.store.exportSnapshot());
@@ -36,6 +38,6 @@ export class DataService {
         importedHabits: result.importedHabits,
         importedCheckins: result.importedCheckins
       };
-    });
+    }).pipe(tap(() => this.sync.notifyChange()));
   }
 }

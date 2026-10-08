@@ -48,7 +48,17 @@ const habitSchema=new mongoose.Schema({
             message:"reminderTime must be in HH:MM 24-hour format"
         }
     },
+    kind:{
+        type:String,
+        enum:["grow","break"],
+        default:"grow"
+    },
     createdAt:{
+        type:Date,
+        default:Date.now
+    },
+    // Last-writer-wins timestamp used by the offline-first sync (client stamps it on every edit).
+    updatedAt:{
         type:Date,
         default:Date.now
     },

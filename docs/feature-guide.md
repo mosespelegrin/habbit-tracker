@@ -156,9 +156,22 @@ Chapter 5 says the same four laws, run backwards, dismantle a bad habit. So ever
 > "The more disciplined your environment is, the less disciplined you need to be." — James Clear (verified, 3-2-1 Newsletter, Nov 27 2025)
 
 **In the app:**
-- Everything lives on-device (`LocalStoreService`): no login, no server, no network — works in airplane mode.
-- Streak math, history, trend, stacks and duplicate check-in protection behave exactly like the old API, reimplemented locally and covered by 13 unit specs.
+- Everything lives on-device first (`LocalStoreService`): no login required, no network needed — works in airplane mode.
+- Streak math, history, trend, stacks and duplicate check-in protection behave exactly like the old API, reimplemented locally and covered by unit specs (19 in total, incl. sync merges).
 - Settings → Backup exports/imports the whole store as JSON (dedupe on import), so the local copy is still yours to move.
+
+---
+
+## 15. Cloud sync — the system keeps the record, not your willpower
+
+> "In order to improve for good, you need to solve problems at the systems level. Fix the inputs and the outputs will fix themselves." — James Clear, *Atomic Habits* (verified, jamesclear.com/atomic-habits-quotes)
+
+**In the app:**
+- Offline-first is the default: reads and writes never touch the network. Sync is an optional, invisible layer — **Settings → Cloud sync** (sign in once) or nothing at all.
+- When online, every local change is pushed automatically (debounced after each edit, on reconnect, on app start, and on "Sync now"). Offline edits simply wait and land on the next connection.
+- One round trip to `POST /api/sync`: the client sends its whole dataset plus deletion tombstones; the server merges **last-writer-wins** on `updatedAt` and returns the authoritative state, which the client merges the same way — idempotent, safe to retry, no queue to replay.
+- The web build on Render and the Android app share the same store and the same MongoDB, so a habit checked off on the phone shows up on the website (and vice versa) — the topbar pill (Synced / Syncing / Offline / Sync issue) shows where you stand.
+- Never blocks, never loses: a failed or offline sync just changes the pill; the data was already saved locally.
 
 ---
 

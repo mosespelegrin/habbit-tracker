@@ -158,3 +158,88 @@
   color: var(--text-muted);
   font-size: 0.88rem;
 }
+
+/* --- Cloud sync panel ----------------------------------------------------- */
+
+.sync-auth-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sync-auth-toggle button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sync-auth-toggle button.primary {
+  background: var(--primary-soft);
+  border-color: rgba(95, 211, 227, 0.55);
+  color: var(--text);
+}
+
+.sync-form {
+  display: grid;
+  gap: 10px;
+  max-width: 380px;
+}
+
+.sync-form input {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.sync-form button {
+  justify-self: start;
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.server-field {
+  margin-top: 14px;
+}
+
+.server-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.server-field input {
+  flex: 1 1 220px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

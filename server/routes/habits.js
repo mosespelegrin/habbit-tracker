@@ -12,7 +12,7 @@ const pickHabitFields=(body)=>{
     const habit={};
     const source=body || {};
 
-    ["name","identity","miniVersion","cue","reward","stackedAfter","reminderTime"].forEach((field)=>{
+    ["name","identity","miniVersion","cue","reward","stackedAfter","reminderTime","kind"].forEach((field)=>{
         if(Object.prototype.hasOwnProperty.call(source,field)){
             habit[field]=source[field];
         }
@@ -54,6 +54,10 @@ const validateHabitInput=(habit,{requireName=false}={})=>{
 
     if(habit.reminderTime!==undefined && habit.reminderTime!=="" && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(habit.reminderTime)){
         errors.push("reminderTime must be in HH:MM 24-hour format");
+    }
+
+    if(habit.kind!==undefined && habit.kind!=="grow" && habit.kind!=="break"){
+        errors.push("kind must be 'grow' or 'break'");
     }
 
     return errors;
@@ -224,7 +228,8 @@ router.put("/:id",async(req,res)=>{
             }
         }
 
-        const habit=await Habit.findOneAndUpdate({_id:req.params.id,owner:req.userId},habitData,{new:true,runValidators:true});
+        // Stamp updatedAt so offline sync can compare edits (last writer wins).
+        const habit=await Habit.findOneAndUpdate({_id:req.params.id,owner:req.userId},{...habitData,updatedAt:new Date()},{new:true,runValidators:true});
         if(!habit){
             return res.status(404).json({message:"Habit not found"});
         }

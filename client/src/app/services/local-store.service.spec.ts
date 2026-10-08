@@ -125,4 +125,128 @@ describe('LocalStoreService', () => {
     expect(service.listHabits().length).toBe(0);
     expect(service.history(habit._id, 30).every((day) => !day.done)).toBe(true);
   });
+
+  // --- Cloud sync (updatedAt, tombstones, last-writer-wins merge) -----------
+
+  it('records tombstones for local deletions and acknowledges them on sync', () => {
+    const habit = service.createHabit({ name: 'Soda' });
+    service.addScorecardEntry('Late-night snacking', 'negative');
+
+    service.deleteHabit(habit._id);
+    expect(service.pendingDeletions().habits).toContain(habit._id);
+
+    const scorecardId = service.listScorecard()[0]._id;
+    service.removeScorecardEntry(scorecardId);
+    expect(service.pendingDeletions().scorecard).toContain(scorecardId);
+
+    // The server acknowledges exactly what we sent; anything newer survives.
+    service.clearTombstones({ habits: [habit._id] });
+    expect(service.pendingDeletions().habits).toEqual([]);
+    expect(service.pendingDeletions().scorecard).toEqual([scorecardId]);
+  });
+
+  it('clears a pending tombstone when the id is imported back', () => {
+    const habit = service.createHabit({ name: 'Soda' });
+    service.deleteHabit(habit._id);
+    service.importSnapshot({ habits: [habit], checkins: [] });
+    expect(service.pendingDeletions().habits).toEqual([]);
+    expect(service.listHabits().length).toBe(1);
+  });
+
+  it('merges a sync response: new habits land, duplicate check-ins are skipped', () => {
+    const local = service.createHabit({ name: 'Read' });
+    service.checkIn(local._id);
+
+    // A habit that exists only on the server (created on another device) must be added locally.
+    const remoteHabit = {
+      _id: 'cc33cc33cc33cc33cc33cc33',
+      name: 'Gym',
+      identity: '',
+      miniVersion: '',
+      cue: '',
+      reward: '',
+      stackedAfter: null,
+      reminderTime: '',
+      kind: 'grow',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    const incomingCheckin = {
+      _id: 'aaaa11111111111111111111',
+      habit: remoteHabit._id,
+      date: new Date().toISOString(),
+      done: true,
+      updatedAt: new Date().toISOString()
+    };
+    const counts = service.mergeServerResponse({
+      habits: [remoteHabit, local],
+      checkins: [incomingCheckin],
+      scorecard: [{ _id: 'bbbb22222222222222222222', text: 'Phone in bed', rating: 'negative', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }],
+      reviews: [{ weekStart: '2026-10-05', wins: 'Won the week', misses: '', tweak: '', updatedAt: new Date().toISOString() }]
+    });
+
+    expect(counts.habits).toBe(1); // only the server-only habit was new
+    expect(counts.checkins).toBe(1);
+    expect(counts.scorecard).toBe(1);
+    expect(counts.reviews).toBe(1);
+    expect(service.listHabits().length).toBe(2);
+    expect(service.listScorecard().length).toBe(1);
+
+    // The same sync response retried is a no-op (idempotent upsert).
+    const retry = service.mergeServerResponse({ habits: [], checkins: [incomingCheckin], scorecard: [], reviews: [] });
+    expect(retry.habits).toBe(0);
+    expect(retry.checkins).toBe(0);
+    expect(retry.scorecard).toBe(0);
+  });
+
+  it('keeps the newer record on a conflict (last writer wins)', () => {
+    const habit = service.createHabit({ name: 'Read' });
+    const older = new Date(Date.now() - 60_000).toISOString(); // local is newer
+    const newer = new Date(Date.now() + 60_000).toISOString();
+
+    // Server has an older version -> local keeps its own (name stays).
+    const countsOlder = service.mergeServerResponse({
+      habits: [{ _id: habit._id, name: 'Stale name', updatedAt: older }],
+      checkins: [], scorecard: [], reviews: []
+    });
+    expect(countsOlder.habits).toBe(0);
+    expect(service.listHabits()[0].name).toBe('Read');
+
+    // Server has a newer version -> the local copy is replaced.
+    const countsNewer = service.mergeServerResponse({
+      habits: [{ _id: habit._id, name: 'Fresh name', updatedAt: newer }],
+      checkins: [], scorecard: [], reviews: []
+    });
+    expect(countsNewer.habits).toBe(1);
+    expect(service.listHabits()[0].name).toBe('Fresh name');
+  });
+
+  it('does not resurrect records that were deleted on this device', () => {
+    const habit = service.createHabit({ name: 'Soda' });
+    service.deleteHabit(habit._id);
+
+    service.mergeServerResponse({
+      habits: [{ _id: habit._id, name: 'Soda', updatedAt: new Date(Date.now() + 60_000).toISOString() }],
+      checkins: [], scorecard: [], reviews: []
+    });
+    expect(service.listHabits().length).toBe(0);
+  });
+
+  it('backfills updatedAt for pre-sync databases and stamps it on edits', () => {
+    // Simulate an old database written before updatedAt existed.
+    const habit = service.createHabit({ name: 'Legacy' });
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    delete raw.habits[0].updatedAt;
+    raw.deleted = undefined;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(raw));
+
+    const fresh = new LocalStoreService();
+    const loaded = fresh.listHabits()[0];
+    expect(loaded.updatedAt).toBe(loaded.createdAt);
+
+    const edited = fresh.updateHabit(loaded._id, { reward: 'Coffee' });
+    // updatedAt is stamped with the edit time; >= guards against same-millisecond edits.
+    expect(edited.updatedAt.length).toBe(24);
+    expect(new Date(edited.updatedAt).getTime()).not.toBeLessThan(new Date(loaded.updatedAt).getTime());
+  });
 });

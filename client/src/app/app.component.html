@@ -62,6 +62,18 @@
       </a>
     </nav>
 
+    <button
+      *ngIf="auth.isAuthenticated()"
+      type="button"
+      class="sync-pill"
+      [ngClass]="'is-' + sync.status()"
+      routerLink="/settings"
+      [attr.aria-label]="'Cloud sync: ' + statusText() + '. Opens Settings.'"
+      [title]="'Cloud sync: ' + statusText() + ' - open Settings'"
+    >
+      <span class="sync-dot" aria-hidden="true"></span>{{ statusText() }}
+    </button>
+
     <button class="theme-toggle" type="button" (click)="toggleTheme()" [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
       <svg *ngIf="darkMode" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="4"></circle>
